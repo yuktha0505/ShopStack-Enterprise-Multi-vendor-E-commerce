@@ -20,22 +20,34 @@ function Login() {
                 password,
             });
 
-            console.log("Response:", response);
-            console.log("Token from Backend:", response.data);
+            console.log(response.data);
+            console.log(response.data.token);
+            console.log(response.data.role);
 
-            localStorage.setItem("token", response.data);
+            // Store JWT Token
+            localStorage.setItem("token", response.data.token);
 
-            console.log("Stored Token:", localStorage.getItem("token"));
+            // Store User Role
+            localStorage.setItem("role", response.data.role);
 
             alert("Login Successful!");
 
-            navigate("/profile");
+            // Redirect based on role
+            if (response.data.role === "VENDOR") {
+                navigate("/vendor/dashboard");
+            } else {
+                navigate("/home");
+            }
 
         } catch (error) {
 
             console.error(error);
 
-            alert("Invalid Email or Password");
+            if (error.response) {
+                alert(error.response.data);
+            } else {
+                alert("Unable to connect to server");
+            }
 
         }
 
@@ -85,7 +97,10 @@ function Login() {
 
                 <p className="text-center mt-6">
                     Don't have an account?{" "}
-                    <Link to="/register" className="text-blue-600 hover:underline">
+                    <Link
+                        to="/register"
+                        className="text-blue-600 hover:underline"
+                    >
                         Create Account
                     </Link>
                 </p>

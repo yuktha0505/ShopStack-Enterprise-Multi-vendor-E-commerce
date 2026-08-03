@@ -6,6 +6,12 @@ import Home from "./pages/Home";
 import Profile from "./pages/Profile";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Products from "./pages/Products";
+import VendorDashboard from "./pages/VendorDashboard";
+import AddProduct from "./pages/AddProduct";
+import MyProducts from "./pages/MyProducts";
+import EditProduct from "./pages/EditProduct";
+import ProductDetails from "./pages/ProductDetails";
+
 
 function App() {
     return (
@@ -41,6 +47,49 @@ function App() {
                     }
                 />
 
+                <Route
+                    path="/vendor/dashboard"
+                    element={
+                        <ProtectedRoute>
+                            <VendorDashboard />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/vendor/add-product"
+                    element={
+                        <ProtectedRoute>
+                            <AddProduct />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/vendor/my-products"
+                    element={
+                        <ProtectedRoute>
+                            <MyProducts />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/vendor/edit-product/:id"
+                    element={
+                        <ProtectedRoute>
+                            <EditProduct />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/product/:id"
+                    element={
+                        <ProtectedRoute>
+                            <ProductDetails />
+                        </ProtectedRoute>
+                    }
+                />
             </Routes>
         </BrowserRouter>
     );

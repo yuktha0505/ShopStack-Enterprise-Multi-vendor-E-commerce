@@ -10,6 +10,7 @@ function Register() {
         name: "",
         email: "",
         password: "",
+        role: "CUSTOMER",
     });
 
     const handleChange = (e) => {
@@ -73,6 +74,23 @@ function Register() {
                         onChange={handleChange}
                     />
 
+                    <div>
+
+                        <label className="block mb-2 font-semibold">
+                            Register As
+                        </label>
+
+                        <select
+                            name="role"
+                            value={user.role}
+                            onChange={handleChange}
+                            className="w-full border rounded-lg px-4 py-3"
+                        >
+                            <option value="CUSTOMER">Customer</option>
+                            <option value="VENDOR">Vendor</option>
+                        </select>
+
+                    </div>
                     <button
                         type="submit"
                         className="w-full bg-blue-600 text-white py-3 rounded-lg"

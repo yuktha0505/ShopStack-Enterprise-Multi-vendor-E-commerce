@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import Navbar from "../components/Navbar";
 
 function Profile() {
 
@@ -76,6 +77,7 @@ function Profile() {
     return (
 
         <div className="min-h-screen bg-gray-100">
+            <Navbar />
 
             <div className="max-w-3xl mx-auto pt-10">
 
