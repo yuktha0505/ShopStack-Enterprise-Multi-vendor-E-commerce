@@ -11,6 +11,7 @@ import AddProduct from "./pages/AddProduct";
 import MyProducts from "./pages/MyProducts";
 import EditProduct from "./pages/EditProduct";
 import ProductDetails from "./pages/ProductDetails";
+import Inventory from "./pages/Inventory";
 
 
 function App() {
@@ -87,6 +88,15 @@ function App() {
                     element={
                         <ProtectedRoute>
                             <ProductDetails />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/inventory"
+                    element={
+                        <ProtectedRoute>
+                            <Inventory />
                         </ProtectedRoute>
                     }
                 />

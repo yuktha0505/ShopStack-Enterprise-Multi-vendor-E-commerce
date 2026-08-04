@@ -1,69 +1,113 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 
 function VendorDashboard() {
+
+    const navigate = useNavigate();
+
     return (
+
         <div className="min-h-screen bg-gray-100">
+
             <Navbar />
 
-            <div className="bg-blue-600 text-white p-5 shadow-lg">
-                <h1 className="text-3xl font-bold">
-                    Vendor Dashboard
-                </h1>
+            {/* Header */}
+
+            <div className="bg-blue-600 text-white py-8">
+
+                <div className="max-w-7xl mx-auto px-5">
+
+                    <h1 className="text-5xl font-bold">
+                        Vendor Dashboard
+                    </h1>
+
+                </div>
+
             </div>
 
-            <div className="max-w-6xl mx-auto mt-10">
+            {/* Dashboard */}
 
-                <h2 className="text-2xl font-semibold mb-8">
+            <div className="max-w-7xl mx-auto py-12 px-5">
+
+                <h2 className="text-4xl font-bold mb-10">
                     Welcome Vendor 👋
                 </h2>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
 
-                    <Link
-                        to="/vendor/add-product"
-                        className="bg-white rounded-xl shadow-lg p-8 hover:shadow-xl transition"
-                    >
-                        <h2 className="text-xl font-bold text-blue-600">
-                            Add Product
-                        </h2>
+                    {/* Add Product */}
 
-                        <p className="mt-3 text-gray-600">
-                            Add a new product to your store.
-                        </p>
+                    <Link to="/add-product">
+
+                        <div className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition p-8 cursor-pointer">
+
+                            <h2 className="text-3xl font-bold text-blue-600">
+                                Add Product
+                            </h2>
+
+                            <p className="text-gray-500 mt-4">
+                                Add a new product to your store.
+                            </p>
+
+                        </div>
+
                     </Link>
 
-                    <Link
-                        to="/vendor/my-products"
-                        className="bg-white rounded-xl shadow-lg p-8 hover:shadow-xl transition"
-                    >
-                        <h2 className="text-xl font-bold text-green-600">
-                            My Products
-                        </h2>
+                    {/* My Products */}
 
-                        <p className="mt-3 text-gray-600">
-                            View and manage your products.
-                        </p>
+                    <Link to="/my-products">
+
+                        <div className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition p-8 cursor-pointer">
+
+                            <h2 className="text-3xl font-bold text-green-600">
+                                My Products
+                            </h2>
+
+                            <p className="text-gray-500 mt-4">
+                                View and manage your products.
+                            </p>
+
+                        </div>
+
                     </Link>
 
-                    <Link
-                        to="/profile"
-                        className="bg-white rounded-xl shadow-lg p-8 hover:shadow-xl transition"
-                    >
-                        <h2 className="text-xl font-bold text-purple-600">
-                            My Profile
-                        </h2>
+                    {/* Profile */}
 
-                        <p className="mt-3 text-gray-600">
-                            Update your profile information.
-                        </p>
+                    <Link to="/profile">
+
+                        <div className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition p-8 cursor-pointer">
+
+                            <h2 className="text-3xl font-bold text-purple-600">
+                                My Profile
+                            </h2>
+
+                            <p className="text-gray-500 mt-4">
+                                Update your profile information.
+                            </p>
+
+                        </div>
+
                     </Link>
+
+                </div>
+
+                {/* Inventory Button */}
+
+                <div className="mt-10">
+
+                    <button
+                        onClick={() => navigate("/inventory")}
+                        className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:scale-105 transition"
+                    >
+                        Inventory Management
+                    </button>
 
                 </div>
 
             </div>
 
         </div>
+
     );
 }
 
