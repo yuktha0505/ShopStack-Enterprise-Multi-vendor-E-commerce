@@ -27,6 +27,8 @@ function Navbar() {
                     ShopStack
                 </Link>
 
+
+
                 <div className="flex gap-6 items-center">
 
                     <Link
@@ -41,6 +43,17 @@ function Navbar() {
                         className="hover:text-gray-200"
                     >
                         Profile
+                    </Link>
+
+                    <Link to="/cart">
+                        Cart
+                    </Link>
+
+                    <Link
+                        to="/my-orders"
+                        className="hover:text-blue-600"
+                    >
+                        My Orders
                     </Link>
 
                     {role === "VENDOR" && (

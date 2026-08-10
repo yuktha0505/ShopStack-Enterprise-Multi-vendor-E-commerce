@@ -12,7 +12,8 @@ import MyProducts from "./pages/MyProducts";
 import EditProduct from "./pages/EditProduct";
 import ProductDetails from "./pages/ProductDetails";
 import Inventory from "./pages/Inventory";
-
+import Cart from "./pages/Cart";
+import MyOrders from "./pages/MyOrders";
 
 function App() {
     return (
@@ -99,6 +100,16 @@ function App() {
                             <Inventory />
                         </ProtectedRoute>
                     }
+                />
+                <Route path="/add-product" element={<ProtectedRoute><AddProduct /></ProtectedRoute>} />
+
+                <Route path="/my-products" element={<ProtectedRoute><MyProducts /></ProtectedRoute>} />
+
+                <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
+
+                <Route
+                    path="/my-orders"
+                    element={<MyOrders />}
                 />
             </Routes>
         </BrowserRouter>

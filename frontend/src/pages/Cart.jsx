@@ -1,0 +1,427 @@
+import { useEffect, useState } from "react";
+import axios from "axios";
+import Navbar from "../components/Navbar";
+
+function Cart() {
+
+    const [cart, setCart] = useState({
+        items: [],
+        total: 0
+    });
+
+    const [loading, setLoading] = useState(true);
+
+
+    // =========================
+    // FETCH CART
+    // =========================
+
+    const fetchCart = async () => {
+
+        try {
+
+            const token = localStorage.getItem("token");
+
+            const response = await axios.get(
+                "http://localhost:8080/api/cart",
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+
+            console.log("Cart:", response.data);
+
+            setCart(response.data);
+
+        } catch (error) {
+
+            console.error("Error loading cart:", error);
+
+            alert("Failed to load cart");
+
+        } finally {
+
+            setLoading(false);
+
+        }
+    };
+
+
+    useEffect(() => {
+
+        fetchCart();
+
+    }, []);
+
+
+    // =========================
+    // INCREASE QUANTITY
+    // =========================
+
+    const increaseQuantity = async (cartItemId) => {
+
+        try {
+
+            const token = localStorage.getItem("token");
+
+            await axios.put(
+                `http://localhost:8080/api/cart/increase/${cartItemId}`,
+                {},
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+
+            fetchCart();
+
+        } catch (error) {
+
+            console.error("Increase quantity error:", error);
+
+            if (error.response) {
+
+                alert(error.response.data);
+
+            } else {
+
+                alert("Failed to increase quantity");
+
+            }
+        }
+    };
+
+
+    // =========================
+    // DECREASE QUANTITY
+    // =========================
+
+    const decreaseQuantity = async (cartItemId) => {
+
+        try {
+
+            const token = localStorage.getItem("token");
+
+            await axios.put(
+                `http://localhost:8080/api/cart/decrease/${cartItemId}`,
+                {},
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+
+            fetchCart();
+
+        } catch (error) {
+
+            console.error("Decrease quantity error:", error);
+
+            if (error.response) {
+
+                alert(error.response.data);
+
+            } else {
+
+                alert("Failed to decrease quantity");
+
+            }
+        }
+    };
+
+
+    // =========================
+    // REMOVE ITEM
+    // =========================
+
+    const removeItem = async (cartItemId) => {
+
+        try {
+
+            const token = localStorage.getItem("token");
+
+            await axios.delete(
+                `http://localhost:8080/api/cart/remove/${cartItemId}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+
+            fetchCart();
+
+        } catch (error) {
+
+            console.error("Remove item error:", error);
+
+            if (error.response) {
+
+                alert(error.response.data);
+
+            } else {
+
+                alert("Failed to remove item");
+
+            }
+        }
+    };
+
+
+    // =========================
+    // CHECKOUT
+    // =========================
+
+    const handleCheckout = async () => {
+
+        try {
+
+            const token = localStorage.getItem("token");
+
+            const response = await axios.post(
+                "http://localhost:8080/api/orders",
+                {},
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+
+            console.log("Order created:", response.data);
+
+            alert("Order placed successfully!");
+
+            // Refresh cart
+            fetchCart();
+
+        } catch (error) {
+
+            console.error("Checkout error:", error);
+
+            if (error.response) {
+
+                alert(error.response.data);
+
+            } else {
+
+                alert("Failed to place order");
+
+            }
+        }
+    };
+
+
+    // =========================
+    // LOADING
+    // =========================
+
+    if (loading) {
+
+        return (
+
+            <div className="min-h-screen bg-gray-100">
+
+                <Navbar />
+
+                <h2 className="text-center mt-10 text-xl">
+                    Loading cart...
+                </h2>
+
+            </div>
+
+        );
+    }
+
+
+    // =========================
+    // CART UI
+    // =========================
+
+    return (
+
+        <div className="min-h-screen bg-gray-100">
+
+            <Navbar />
+
+
+            <div className="max-w-6xl mx-auto py-10 px-5">
+
+                <h1 className="text-3xl font-bold text-blue-600 mb-8">
+                    My Cart
+                </h1>
+
+
+                {/* EMPTY CART */}
+
+                {cart.items.length === 0 ? (
+
+                    <div className="bg-white rounded-xl shadow-lg p-10 text-center">
+
+                        <h2 className="text-2xl font-semibold">
+                            Your cart is empty
+                        </h2>
+
+                        <p className="text-gray-500 mt-3">
+                            Add some products to your cart.
+                        </p>
+
+                    </div>
+
+                ) : (
+
+
+                    /* CART WITH ITEMS */
+
+                    <div className="grid lg:grid-cols-3 gap-8">
+
+
+                        {/* =========================
+                            CART ITEMS
+                        ========================= */}
+
+                        <div className="lg:col-span-2 space-y-5">
+
+                            {cart.items.map((item) => (
+
+                                <div
+                                    key={item.id}
+                                    className="bg-white rounded-xl shadow-lg p-5 flex flex-col md:flex-row gap-5"
+                                >
+
+
+                                    {/* PRODUCT IMAGE */}
+
+                                    <img
+                                        src={item.imageUrl}
+                                        alt={item.productName}
+                                        className="w-full md:w-40 h-40 object-cover rounded-lg"
+                                    />
+
+
+                                    {/* PRODUCT DETAILS */}
+
+                                    <div className="flex-1">
+
+                                        <h2 className="text-xl font-bold">
+                                            {item.productName}
+                                        </h2>
+
+
+                                        <p className="text-blue-600 text-xl font-bold mt-2">
+                                            ₹ {item.price}
+                                        </p>
+
+
+                                        <p className="text-gray-600 mt-2">
+                                            Subtotal: ₹ {item.subtotal}
+                                        </p>
+
+
+                                        {/* QUANTITY */}
+
+                                        <div className="flex items-center gap-4 mt-5">
+
+
+                                            <button
+                                                onClick={() =>
+                                                    decreaseQuantity(item.id)
+                                                }
+                                                className="bg-gray-200 px-4 py-2 rounded-lg font-bold hover:bg-gray-300"
+                                            >
+                                                −
+                                            </button>
+
+
+                                            <span className="text-lg font-semibold">
+                                                {item.quantity}
+                                            </span>
+
+
+                                            <button
+                                                onClick={() =>
+                                                    increaseQuantity(item.id)
+                                                }
+                                                className="bg-gray-200 px-4 py-2 rounded-lg font-bold hover:bg-gray-300"
+                                            >
+                                                +
+                                            </button>
+
+                                        </div>
+
+
+                                        {/* REMOVE */}
+
+                                        <button
+                                            onClick={() =>
+                                                removeItem(item.id)
+                                            }
+                                            className="mt-4 text-red-600 hover:underline"
+                                        >
+                                            Remove
+                                        </button>
+
+                                    </div>
+
+                                </div>
+
+                            ))}
+
+                        </div>
+
+
+                        {/* =========================
+                            ORDER SUMMARY
+                        ========================= */}
+
+                        <div className="bg-white rounded-xl shadow-lg p-6 h-fit">
+
+                            <h2 className="text-2xl font-bold">
+                                Order Summary
+                            </h2>
+
+
+                            <div className="border-t mt-5 pt-5">
+
+                                <div className="flex justify-between text-lg">
+
+                                    <span>
+                                        Total
+                                    </span>
+
+                                    <span className="font-bold text-blue-600">
+                                        ₹ {cart.total}
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+
+                            {/* CHECKOUT BUTTON */}
+
+                            <button
+                                onClick={handleCheckout}
+                                className="w-full bg-blue-600 text-white py-3 rounded-lg mt-6 hover:bg-blue-700"
+                            >
+                                Proceed to Checkout
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                )}
+
+            </div>
+
+        </div>
+
+    );
+}
+
+export default Cart;
