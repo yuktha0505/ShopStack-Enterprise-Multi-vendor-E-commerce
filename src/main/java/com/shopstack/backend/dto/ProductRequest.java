@@ -5,12 +5,16 @@ public class ProductRequest {
     private String name;
     private String description;
     private Double price;
+    
+    private Double discount;
     private Integer stock;
     private String category;
     private String imageUrl;
 
+
     public ProductRequest() {
     }
+
 
     public String getName() {
         return name;
@@ -20,6 +24,7 @@ public class ProductRequest {
         this.name = name;
     }
 
+
     public String getDescription() {
         return description;
     }
@@ -27,6 +32,7 @@ public class ProductRequest {
     public void setDescription(String description) {
         this.description = description;
     }
+
 
     public Double getPrice() {
         return price;
@@ -36,6 +42,16 @@ public class ProductRequest {
         this.price = price;
     }
 
+
+    public Double getDiscount() {
+        return discount;
+    }
+
+    public void setDiscount(Double discount) {
+        this.discount = discount;
+    }
+
+
     public Integer getStock() {
         return stock;
     }
@@ -44,6 +60,7 @@ public class ProductRequest {
         this.stock = stock;
     }
 
+
     public String getCategory() {
         return category;
     }
@@ -51,6 +68,7 @@ public class ProductRequest {
     public void setCategory(String category) {
         this.category = category;
     }
+
 
     public String getImageUrl() {
         return imageUrl;

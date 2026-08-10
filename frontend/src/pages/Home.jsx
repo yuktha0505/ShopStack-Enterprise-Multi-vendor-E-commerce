@@ -100,9 +100,35 @@ function Home() {
                                         {product.description}
                                     </p>
 
-                                    <p className="text-blue-600 text-2xl font-bold mt-4">
-                                        ₹ {product.price}
-                                    </p>
+                                    {product.discount > 0 ? (
+
+                                        <div className="mt-4">
+
+                                            <div className="flex items-center gap-2">
+
+            <span className="text-gray-400 line-through">
+                ₹ {product.price}
+            </span>
+
+                                                <span className="text-red-600 font-semibold">
+                {product.discount}% OFF
+            </span>
+
+                                            </div>
+
+                                            <p className="text-green-600 text-2xl font-bold mt-1">
+                                                ₹ {product.finalPrice}
+                                            </p>
+
+                                        </div>
+
+                                    ) : (
+
+                                        <p className="text-blue-600 text-2xl font-bold mt-4">
+                                            ₹ {product.finalPrice ?? product.price}
+                                        </p>
+
+                                    )}
 
                                     <p className="mt-2">
                                         Category :

@@ -31,6 +31,24 @@ public class ProductService {
         product.setName(request.getName());
         product.setDescription(request.getDescription());
         product.setPrice(request.getPrice());
+
+        Double discount = request.getDiscount();
+
+        if (discount == null) {
+            discount = 0.0;
+        }
+
+        if (discount < 0 || discount > 100) {
+            throw new RuntimeException("Discount must be between 0 and 100");
+        }
+
+        product.setDiscount(discount);
+
+        Double finalPrice =
+                request.getPrice() -
+                        (request.getPrice() * discount / 100);
+
+        product.setFinalPrice(finalPrice);
         product.setStock(request.getStock());
         product.setCategory(request.getCategory());
         product.setImageUrl(request.getImageUrl());
@@ -55,6 +73,20 @@ public class ProductService {
             response.setName(product.getName());
             response.setDescription(product.getDescription());
             response.setPrice(product.getPrice());
+            Double discount = product.getDiscount();
+
+            if (discount == null) {
+                discount = 0.0;
+            }
+
+            Double finalPrice = product.getFinalPrice();
+
+            if (finalPrice == null) {
+                finalPrice = product.getPrice();
+            }
+
+            response.setDiscount(discount);
+            response.setFinalPrice(finalPrice);
             response.setStock(product.getStock());
             response.setCategory(product.getCategory());
             response.setImageUrl(product.getImageUrl());
@@ -83,6 +115,8 @@ public class ProductService {
             response.setName(product.getName());
             response.setDescription(product.getDescription());
             response.setPrice(product.getPrice());
+            response.setDiscount(product.getDiscount());
+            response.setFinalPrice(product.getFinalPrice());
             response.setStock(product.getStock());
             response.setCategory(product.getCategory());
             response.setImageUrl(product.getImageUrl());
@@ -105,6 +139,24 @@ public class ProductService {
         product.setName(request.getName());
         product.setDescription(request.getDescription());
         product.setPrice(request.getPrice());
+
+        Double discount = request.getDiscount();
+
+        if (discount == null) {
+            discount = 0.0;
+        }
+
+        if (discount < 0 || discount > 100) {
+            throw new RuntimeException("Discount must be between 0 and 100");
+        }
+
+        product.setDiscount(discount);
+
+        Double finalPrice =
+                request.getPrice() -
+                        (request.getPrice() * discount / 100);
+
+        product.setFinalPrice(finalPrice);
         product.setStock(request.getStock());
         product.setCategory(request.getCategory());
         product.setImageUrl(request.getImageUrl());
@@ -138,6 +190,8 @@ public class ProductService {
         response.setName(product.getName());
         response.setDescription(product.getDescription());
         response.setPrice(product.getPrice());
+        response.setDiscount(product.getDiscount());
+        response.setFinalPrice(product.getFinalPrice());
         response.setStock(product.getStock());
         response.setCategory(product.getCategory());
         response.setImageUrl(product.getImageUrl());

@@ -19,6 +19,10 @@ public class Product {
     @Column(nullable = false)
     private Double price;
 
+    private Double discount;
+
+    private Double finalPrice;
+
     @Column(nullable = false)
     private Integer stock;
 
@@ -30,8 +34,10 @@ public class Product {
     @JoinColumn(name = "vendor_id")
     private User vendor;
 
+
     public Product() {
     }
+
 
     public Long getId() {
         return id;
@@ -41,6 +47,7 @@ public class Product {
         this.id = id;
     }
 
+
     public String getName() {
         return name;
     }
@@ -48,6 +55,7 @@ public class Product {
     public void setName(String name) {
         this.name = name;
     }
+
 
     public String getDescription() {
         return description;
@@ -57,6 +65,7 @@ public class Product {
         this.description = description;
     }
 
+
     public Double getPrice() {
         return price;
     }
@@ -64,6 +73,25 @@ public class Product {
     public void setPrice(Double price) {
         this.price = price;
     }
+
+
+    public Double getDiscount() {
+        return discount;
+    }
+
+    public void setDiscount(Double discount) {
+        this.discount = discount;
+    }
+
+
+    public Double getFinalPrice() {
+        return finalPrice;
+    }
+
+    public void setFinalPrice(Double finalPrice) {
+        this.finalPrice = finalPrice;
+    }
+
 
     public Integer getStock() {
         return stock;
@@ -73,6 +101,7 @@ public class Product {
         this.stock = stock;
     }
 
+
     public String getCategory() {
         return category;
     }
@@ -81,6 +110,7 @@ public class Product {
         this.category = category;
     }
 
+
     public String getImageUrl() {
         return imageUrl;
     }
@@ -88,6 +118,7 @@ public class Product {
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
     }
+
 
     public User getVendor() {
         return vendor;

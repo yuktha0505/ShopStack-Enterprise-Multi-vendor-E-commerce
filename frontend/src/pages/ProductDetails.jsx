@@ -1,21 +1,14 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import axios from "axios";
 import Navbar from "../components/Navbar";
 
 function ProductDetails() {
 
     const { id } = useParams();
-    const navigate = useNavigate();
 
     const [product, setProduct] = useState(null);
-    const [quantity, setQuantity] = useState(1);
     const [loading, setLoading] = useState(true);
-
-
-    // =========================
-    // FETCH PRODUCT
-    // =========================
 
     useEffect(() => {
 
@@ -33,7 +26,8 @@ function ProductDetails() {
                         }
                     }
                 );
-                console.log("Product:", response.data);
+
+                console.log("Product received:", response.data);
 
                 setProduct(response.data);
 
@@ -46,6 +40,7 @@ function ProductDetails() {
                 setLoading(false);
 
             }
+
         };
 
         fetchProduct();
@@ -53,70 +48,9 @@ function ProductDetails() {
     }, [id]);
 
 
-    // =========================
-    // ADD TO CART
-    // =========================
-
-    const handleAddToCart = async () => {
-
-        try {
-
-            const token = localStorage.getItem("token");
-
-            if (!token) {
-
-                alert("Please login first");
-
-                navigate("/login");
-
-                return;
-            }
-
-
-            const response = await axios.post(
-                "http://localhost:8080/api/cart/add",
-                {
-                    productId: product.id,
-                    quantity: quantity
-                },
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                }
-            );
-
-
-            console.log("Add to cart response:", response.data);
-
-            alert("Product added to cart!");
-
-
-        } catch (error) {
-
-            console.error("Add to cart error:", error);
-
-            if (error.response) {
-
-                alert(error.response.data);
-
-            } else {
-
-                alert("Failed to add product to cart");
-
-            }
-        }
-    };
-
-
-    // =========================
-    // LOADING
-    // =========================
-
     if (loading) {
 
         return (
-
             <div className="min-h-screen bg-gray-100">
 
                 <Navbar />
@@ -126,32 +60,87 @@ function ProductDetails() {
                 </h2>
 
             </div>
-
         );
+
     }
 
 
     if (!product) {
 
         return (
-
             <div className="min-h-screen bg-gray-100">
 
                 <Navbar />
 
-                <h2 className="text-center mt-10 text-xl">
+                <h2 className="text-center mt-10 text-xl text-red-600">
                     Product not found
                 </h2>
 
             </div>
-
         );
+
     }
 
 
-    // =========================
-    // PRODUCT DETAILS
-    // =========================
+    const isOutOfStock = product.stock <= 0;
+
+    const hasDiscount =
+        product.discount != null &&
+        product.discount > 0;
+
+
+    const addToCart = async () => {
+
+        try {
+
+            const token = localStorage.getItem("token");
+
+            if (!token) {
+
+                alert("Please login to add products to cart");
+                return;
+
+            }
+
+
+            if (isOutOfStock) {
+
+                alert("Product is Out of Stock");
+                return;
+
+            }
+
+
+            const response = await axios.post(
+                "http://localhost:8080/api/cart/add",
+                {
+                    productId: product.id,
+                    quantity: 1
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+
+
+            alert(response.data);
+
+        } catch (error) {
+
+            console.error("Add to cart error:", error);
+
+            if (error.response) {
+                alert(error.response.data);
+            } else {
+                alert("Failed to add product to cart");
+            }
+
+        }
+
+    };
+
 
     return (
 
@@ -159,13 +148,12 @@ function ProductDetails() {
 
             <Navbar />
 
-
             <div className="max-w-5xl mx-auto py-10 px-5">
 
                 <div className="bg-white rounded-xl shadow-lg p-8 grid md:grid-cols-2 gap-10">
 
 
-                    {/* IMAGE */}
+                    {/* Product Image */}
 
                     <div>
 
@@ -179,12 +167,8 @@ function ProductDetails() {
 
                         ) : (
 
-                            <div className="w-full h-96 bg-gray-200 rounded-xl flex items-center justify-center">
-
-                                <span className="text-gray-500">
-                                    No Image Available
-                                </span>
-
+                            <div className="w-full h-96 bg-gray-200 rounded-xl flex items-center justify-center text-gray-500">
+                                No Image
                             </div>
 
                         )}
@@ -192,7 +176,7 @@ function ProductDetails() {
                     </div>
 
 
-                    {/* DETAILS */}
+                    {/* Product Information */}
 
                     <div>
 
@@ -206,122 +190,109 @@ function ProductDetails() {
                         </p>
 
 
-                        <h2 className="text-3xl text-blue-600 font-bold mt-6">
-                            ₹ {product.price}
-                        </h2>
+                        {/* Pricing */}
+
+                        <div className="mt-6">
+
+                            {hasDiscount ? (
+
+                                <>
+
+                                    <div className="flex items-center gap-3">
+
+                                        <span className="text-gray-500 text-xl line-through">
+                                            ₹ {product.price}
+                                        </span>
+
+                                        <span className="bg-red-500 text-white px-3 py-1 rounded-lg font-semibold">
+                                            {product.discount}% OFF
+                                        </span>
+
+                                    </div>
 
 
-                        <p className="mt-4">
+                                    <h2 className="text-4xl text-green-600 font-bold mt-3">
+                                        ₹ {product.finalPrice}
+                                    </h2>
+
+                                </>
+
+                            ) : (
+
+                                <h2 className="text-4xl text-blue-600 font-bold">
+                                    ₹ {product.finalPrice ?? product.price}
+                                </h2>
+
+                            )}
+
+                        </div>
+
+
+                        {/* Category */}
+
+                        <p className="mt-6">
+
                             Category :
-                            <b> {product.category}</b>
-                        </p>
 
-
-                        <p className="mt-2">
-                            Seller :
-                            <b> {product.vendorName}</b>
-                        </p>
-
-
-                        {/* STOCK */}
-
-                        <p className="mt-2">
-
-                            Stock :
-
-                            <b className={
-                                product.stock > 0
-                                    ? "text-green-600"
-                                    : "text-red-600"
-                            }>
-
-                                {product.stock > 0
-                                    ? ` ${product.stock}`
-                                    : " Out of Stock"
-                                }
-
+                            <b>
+                                {" "}
+                                {product.category || "Not specified"}
                             </b>
 
                         </p>
 
 
-                        {/* QUANTITY */}
+                        {/* Seller */}
 
-                        {product.stock > 0 && (
+                        <p className="mt-2">
 
-                            <div className="flex items-center gap-4 mt-6">
+                            Seller :
 
-                                <span className="font-semibold">
-                                    Quantity:
-                                </span>
+                            <b>
+                                {" "}
+                                {product.vendorName}
+                            </b>
 
-
-                                <button
-                                    onClick={() =>
-                                        setQuantity(
-                                            Math.max(1, quantity - 1)
-                                        )
-                                    }
-                                    className="bg-gray-200 px-4 py-2 rounded-lg font-bold"
-                                >
-                                    −
-                                </button>
+                        </p>
 
 
-                                <span className="text-lg font-semibold">
-                                    {quantity}
-                                </span>
+                        {/* Stock */}
+
+                        <div className="mt-4">
+
+                            {isOutOfStock ? (
+
+                                <p className="text-red-600 font-bold text-lg">
+                                    Out of Stock
+                                </p>
+
+                            ) : (
+
+                                <p className="text-green-600 font-semibold">
+                                    {product.stock} items available
+                                </p>
+
+                            )}
+
+                        </div>
 
 
-                                <button
-                                    onClick={() =>
-                                        setQuantity(
-                                            Math.min(
-                                                product.stock,
-                                                quantity + 1
-                                            )
-                                        )
-                                    }
-                                    className="bg-gray-200 px-4 py-2 rounded-lg font-bold"
-                                >
-                                    +
-                                </button>
-
-                            </div>
-
-                        )}
-
-
-                        {/* ADD TO CART */}
-
-                        {product.stock > 0 ? (
-
-                            <button
-                                onClick={handleAddToCart}
-                                className="w-full mt-8 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 font-semibold"
-                            >
-                                Add to Cart
-                            </button>
-
-                        ) : (
-
-                            <button
-                                disabled
-                                className="w-full mt-8 bg-gray-400 text-white py-3 rounded-lg cursor-not-allowed"
-                            >
-                                Out of Stock
-                            </button>
-
-                        )}
-
-
-                        {/* GO TO CART */}
+                        {/* Add To Cart */}
 
                         <button
-                            onClick={() => navigate("/cart")}
-                            className="w-full mt-3 border border-blue-600 text-blue-600 py-3 rounded-lg hover:bg-blue-50"
+                            onClick={addToCart}
+                            disabled={isOutOfStock}
+                            className={`w-full mt-6 py-3 rounded-lg text-white font-semibold ${
+                                isOutOfStock
+                                    ? "bg-gray-400 cursor-not-allowed"
+                                    : "bg-blue-600 hover:bg-blue-700"
+                            }`}
                         >
-                            View Cart
+
+                            {isOutOfStock
+                                ? "Out of Stock"
+                                : "Add to Cart"}
+
                         </button>
 
                     </div>
@@ -333,6 +304,7 @@ function ProductDetails() {
         </div>
 
     );
+
 }
 
 export default ProductDetails;
