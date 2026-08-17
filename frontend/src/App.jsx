@@ -14,6 +14,10 @@ import ProductDetails from "./pages/ProductDetails";
 import Inventory from "./pages/Inventory";
 import Cart from "./pages/Cart";
 import MyOrders from "./pages/MyOrders";
+import Checkout from "./pages/Checkout";
+import VendorOrders from "./pages/VendorOrders";
+import OrderSuccess from "./pages/OrderSuccess";
+import Notifications from "./pages/Notifications";
 
 function App() {
     return (
@@ -110,6 +114,26 @@ function App() {
                 <Route
                     path="/my-orders"
                     element={<MyOrders />}
+                />
+
+                <Route path="/checkout" element={<Checkout />} />
+                <Route
+                    path="/vendor/orders"
+                    element={<VendorOrders />}
+                />
+                <Route
+                    path="/vendor/orders"
+                    element={<VendorOrders />}
+                />
+
+                <Route
+                    path="/notifications"
+                    element={<Notifications />}
+                />
+
+                <Route
+                    path="/order-success"
+                    element={<OrderSuccess />}
                 />
             </Routes>
         </BrowserRouter>

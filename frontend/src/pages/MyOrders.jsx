@@ -7,6 +7,15 @@ function MyOrders() {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    const statuses = [
+        "PLACED",
+        "CONFIRMED",
+        "PROCESSING",
+        "SHIPPED",
+        "OUT_FOR_DELIVERY",
+        "DELIVERED"
+    ];
+
     const fetchOrders = async () => {
 
         try {
@@ -45,6 +54,33 @@ function MyOrders() {
     }, []);
 
 
+    const getStatusIndex = (status) => {
+
+        return statuses.indexOf(status);
+
+    };
+
+
+    const isCompleted = (orderStatus, status) => {
+
+        const currentIndex = getStatusIndex(orderStatus);
+        const statusIndex = getStatusIndex(status);
+
+        return statusIndex <= currentIndex;
+
+    };
+
+
+    const formatStatus = (status) => {
+
+        return status
+            .replaceAll("_", " ")
+            .toLowerCase()
+            .replace(/\b\w/g, char => char.toUpperCase());
+
+    };
+
+
     if (loading) {
 
         return (
@@ -58,6 +94,7 @@ function MyOrders() {
 
             </div>
         );
+
     }
 
 
@@ -90,7 +127,7 @@ function MyOrders() {
 
                 ) : (
 
-                    <div className="space-y-6">
+                    <div className="space-y-8">
 
                         {orders.map((order) => (
 
@@ -120,11 +157,102 @@ function MyOrders() {
 
                                     <div>
 
-                                        <span
-                                            className="inline-block bg-green-100 text-green-700 px-4 py-2 rounded-lg font-semibold"
-                                        >
-                                            {order.status}
+                                        <span className="inline-block bg-green-100 text-green-700 px-4 py-2 rounded-lg font-semibold">
+                                            {formatStatus(order.status)}
                                         </span>
+
+                                    </div>
+
+                                </div>
+
+
+                                {/* ORDER TRACKING */}
+
+                                <div className="mt-8">
+
+                                    <h3 className="text-xl font-bold mb-6">
+                                        Order Tracking
+                                    </h3>
+
+
+                                    <div className="relative">
+
+                                        {/* LINE */}
+
+                                        <div className="hidden md:block absolute top-5 left-0 right-0 h-1 bg-gray-200">
+                                        </div>
+
+
+                                        <div className="grid grid-cols-2 md:grid-cols-6 gap-6">
+
+                                            {statuses.map((status) => {
+
+                                                const completed =
+                                                    isCompleted(
+                                                        order.status,
+                                                        status
+                                                    );
+
+                                                const current =
+                                                    order.status === status;
+
+                                                return (
+
+                                                    <div
+                                                        key={status}
+                                                        className="relative flex flex-col items-center text-center"
+                                                    >
+
+                                                        {/* CIRCLE */}
+
+                                                        <div
+                                                            className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold z-10 ${
+                                                                completed
+                                                                    ? "bg-blue-600"
+                                                                    : "bg-gray-300"
+                                                            }`}
+                                                        >
+
+                                                            {completed
+                                                                ? "✓"
+                                                                : ""
+                                                            }
+
+                                                        </div>
+
+
+                                                        {/* STATUS */}
+
+                                                        <p
+                                                            className={`mt-3 text-sm font-semibold ${
+                                                                current
+                                                                    ? "text-blue-600"
+                                                                    : completed
+                                                                        ? "text-gray-700"
+                                                                        : "text-gray-400"
+                                                            }`}
+                                                        >
+                                                            {formatStatus(status)}
+                                                        </p>
+
+
+                                                        {/* CURRENT */}
+
+                                                        {current && (
+
+                                                            <span className="mt-1 text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full">
+                                                                Current
+                                                            </span>
+
+                                                        )}
+
+                                                    </div>
+
+                                                );
+
+                                            })}
+
+                                        </div>
 
                                     </div>
 
@@ -133,75 +261,83 @@ function MyOrders() {
 
                                 {/* ORDER ITEMS */}
 
-                                <div className="mt-5 space-y-4">
+                                <div className="mt-8 border-t pt-6">
 
-                                    {order.items.map((item) => (
+                                    <h3 className="text-xl font-bold mb-4">
+                                        Products
+                                    </h3>
 
-                                        <div
-                                            key={item.id}
-                                            className="flex flex-col md:flex-row gap-4 border-b pb-4"
-                                        >
+                                    <div className="space-y-4">
 
-                                            {/* IMAGE */}
+                                        {order.items.map((item) => (
 
-                                            {item.imageUrl ? (
+                                            <div
+                                                key={item.id}
+                                                className="flex flex-col md:flex-row gap-4 border-b pb-4"
+                                            >
 
-                                                <img
-                                                    src={item.imageUrl}
-                                                    alt={item.productName}
-                                                    className="w-24 h-24 object-cover rounded-lg"
-                                                />
+                                                {/* IMAGE */}
 
-                                            ) : (
+                                                {item.imageUrl ? (
 
-                                                <div className="w-24 h-24 bg-gray-200 rounded-lg flex items-center justify-center">
+                                                    <img
+                                                        src={item.imageUrl}
+                                                        alt={item.productName}
+                                                        className="w-24 h-24 object-cover rounded-lg"
+                                                    />
 
-                                                    <span className="text-xs text-gray-500">
-                                                        No Image
-                                                    </span>
+                                                ) : (
+
+                                                    <div className="w-24 h-24 bg-gray-200 rounded-lg flex items-center justify-center">
+
+                                                        <span className="text-xs text-gray-500">
+                                                            No Image
+                                                        </span>
+
+                                                    </div>
+
+                                                )}
+
+
+                                                {/* DETAILS */}
+
+                                                <div className="flex-1">
+
+                                                    <h3 className="text-lg font-bold">
+                                                        {item.productName}
+                                                    </h3>
+
+                                                    <p className="text-gray-600 mt-1">
+                                                        Quantity: {item.quantity}
+                                                    </p>
+
+                                                    <p className="text-gray-600">
+                                                        Price: ₹ {item.price}
+                                                    </p>
 
                                                 </div>
 
-                                            )}
 
+                                                {/* SUBTOTAL */}
 
-                                            {/* DETAILS */}
+                                                <div className="font-bold text-blue-600">
 
-                                            <div className="flex-1">
+                                                    ₹ {item.subtotal}
 
-                                                <h3 className="text-lg font-bold">
-                                                    {item.productName}
-                                                </h3>
-
-                                                <p className="text-gray-600 mt-1">
-                                                    Quantity: {item.quantity}
-                                                </p>
-
-                                                <p className="text-gray-600">
-                                                    Price: ₹ {item.price}
-                                                </p>
+                                                </div>
 
                                             </div>
 
+                                        ))}
 
-                                            {/* SUBTOTAL */}
-
-                                            <div className="font-bold text-blue-600">
-
-                                                ₹ {item.subtotal}
-
-                                            </div>
-
-                                        </div>
-
-                                    ))}
+                                    </div>
 
                                 </div>
 
 
                                 {/* TOTAL */}
 
-                                <div className="flex justify-between items-center mt-5">
+                                <div className="flex justify-between items-center mt-5 pt-5 border-t">
 
                                     <span className="text-xl font-semibold">
                                         Total
@@ -226,6 +362,7 @@ function MyOrders() {
         </div>
 
     );
+
 }
 
 export default MyOrders;

@@ -66,6 +66,8 @@
             <optional>true</optional>
         </dependency>
 
+
+
         <!-- JWT -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
@@ -85,6 +87,13 @@
             <artifactId>jjwt-jackson</artifactId>
             <version>0.12.7</version>
             <scope>runtime</scope>
+        </dependency>
+
+        <!-- Razorpay -->
+        <dependency>
+            <groupId>com.razorpay</groupId>
+            <artifactId>razorpay-java</artifactId>
+            <version>1.4.8</version>
         </dependency>
 
         <!-- Tests -->

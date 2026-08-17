@@ -1,9 +1,7 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 
 function VendorDashboard() {
-
-    const navigate = useNavigate();
 
     return (
 
@@ -25,6 +23,7 @@ function VendorDashboard() {
 
             </div>
 
+
             {/* Dashboard */}
 
             <div className="max-w-7xl mx-auto py-12 px-5">
@@ -33,9 +32,11 @@ function VendorDashboard() {
                     Welcome Vendor 👋
                 </h2>
 
+
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
 
-                    {/* Add Product */}
+
+                    {/* ADD PRODUCT */}
 
                     <Link to="/add-product">
 
@@ -53,7 +54,8 @@ function VendorDashboard() {
 
                     </Link>
 
-                    {/* My Products */}
+
+                    {/* MY PRODUCTS */}
 
                     <Link to="/my-products">
 
@@ -71,7 +73,48 @@ function VendorDashboard() {
 
                     </Link>
 
-                    {/* Profile */}
+
+                    {/* MY ORDERS */}
+
+                    <Link to="/vendor/orders">
+
+                        <div className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition p-8 cursor-pointer">
+
+                            <h2 className="text-3xl font-bold text-orange-600">
+                                Customer Orders
+                            </h2>
+
+                            <p className="text-gray-500 mt-4">
+                                View orders containing your products
+                                and update their status.
+                            </p>
+
+                        </div>
+
+                    </Link>
+
+
+                    {/* NOTIFICATIONS */}
+
+                    <Link to="/notifications">
+
+                        <div className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition p-8 cursor-pointer">
+
+                            <h2 className="text-3xl font-bold text-red-600">
+                                Notifications
+                            </h2>
+
+                            <p className="text-gray-500 mt-4">
+                                View new order notifications and
+                                important updates.
+                            </p>
+
+                        </div>
+
+                    </Link>
+
+
+                    {/* PROFILE */}
 
                     <Link to="/profile">
 
@@ -89,18 +132,24 @@ function VendorDashboard() {
 
                     </Link>
 
-                </div>
 
-                {/* Inventory Button */}
+                    {/* INVENTORY */}
 
-                <div className="mt-10">
+                    <Link to="/inventory">
 
-                    <button
-                        onClick={() => navigate("/inventory")}
-                        className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:scale-105 transition"
-                    >
-                        Inventory Management
-                    </button>
+                        <div className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition p-8 cursor-pointer">
+
+                            <h2 className="text-3xl font-bold text-pink-600">
+                                Inventory Management
+                            </h2>
+
+                            <p className="text-gray-500 mt-4">
+                                Monitor and manage your product stock.
+                            </p>
+
+                        </div>
+
+                    </Link>
 
                 </div>
 

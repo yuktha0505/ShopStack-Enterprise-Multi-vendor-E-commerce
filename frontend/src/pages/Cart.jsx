@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Navbar from "../components/Navbar";
+import { useNavigate } from "react-router-dom";
 
 function Cart() {
+
+    const navigate = useNavigate();
 
     const [cart, setCart] = useState({
         items: [],
@@ -12,10 +15,7 @@ function Cart() {
     const [loading, setLoading] = useState(true);
 
 
-    // =========================
-    // FETCH CART
-    // =========================
-
+    // Fetch cart
     const fetchCart = async () => {
 
         try {
@@ -31,14 +31,11 @@ function Cart() {
                 }
             );
 
-            console.log("Cart:", response.data);
-
             setCart(response.data);
 
         } catch (error) {
 
             console.error("Error loading cart:", error);
-
             alert("Failed to load cart");
 
         } finally {
@@ -50,16 +47,11 @@ function Cart() {
 
 
     useEffect(() => {
-
         fetchCart();
-
     }, []);
 
 
-    // =========================
-    // INCREASE QUANTITY
-    // =========================
-
+    // Increase quantity
     const increaseQuantity = async (cartItemId) => {
 
         try {
@@ -83,22 +75,19 @@ function Cart() {
             console.error("Increase quantity error:", error);
 
             if (error.response) {
-
-                alert(error.response.data);
-
+                alert(
+                    error.response.data?.message ||
+                    error.response.data ||
+                    "Failed to increase quantity"
+                );
             } else {
-
                 alert("Failed to increase quantity");
-
             }
         }
     };
 
 
-    // =========================
-    // DECREASE QUANTITY
-    // =========================
-
+    // Decrease quantity
     const decreaseQuantity = async (cartItemId) => {
 
         try {
@@ -122,22 +111,19 @@ function Cart() {
             console.error("Decrease quantity error:", error);
 
             if (error.response) {
-
-                alert(error.response.data);
-
+                alert(
+                    error.response.data?.message ||
+                    error.response.data ||
+                    "Failed to decrease quantity"
+                );
             } else {
-
                 alert("Failed to decrease quantity");
-
             }
         }
     };
 
 
-    // =========================
-    // REMOVE ITEM
-    // =========================
-
+    // Remove item
     const removeItem = async (cartItemId) => {
 
         try {
@@ -160,66 +146,19 @@ function Cart() {
             console.error("Remove item error:", error);
 
             if (error.response) {
-
-                alert(error.response.data);
-
+                alert(
+                    error.response.data?.message ||
+                    error.response.data ||
+                    "Failed to remove item"
+                );
             } else {
-
                 alert("Failed to remove item");
-
             }
         }
     };
 
 
-    // =========================
-    // CHECKOUT
-    // =========================
-
-    const handleCheckout = async () => {
-
-        try {
-
-            const token = localStorage.getItem("token");
-
-            const response = await axios.post(
-                "http://localhost:8080/api/orders",
-                {},
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                }
-            );
-
-            console.log("Order created:", response.data);
-
-            alert("Order placed successfully!");
-
-            // Refresh cart
-            fetchCart();
-
-        } catch (error) {
-
-            console.error("Checkout error:", error);
-
-            if (error.response) {
-
-                alert(error.response.data);
-
-            } else {
-
-                alert("Failed to place order");
-
-            }
-        }
-    };
-
-
-    // =========================
-    // LOADING
-    // =========================
-
+    // Loading
     if (loading) {
 
         return (
@@ -238,16 +177,11 @@ function Cart() {
     }
 
 
-    // =========================
-    // CART UI
-    // =========================
-
     return (
 
         <div className="min-h-screen bg-gray-100">
 
             <Navbar />
-
 
             <div className="max-w-6xl mx-auto py-10 px-5">
 
@@ -256,10 +190,9 @@ function Cart() {
                 </h1>
 
 
-                {/* EMPTY CART */}
-
                 {cart.items.length === 0 ? (
 
+                    // Empty cart
                     <div className="bg-white rounded-xl shadow-lg p-10 text-center">
 
                         <h2 className="text-2xl font-semibold">
@@ -270,19 +203,21 @@ function Cart() {
                             Add some products to your cart.
                         </p>
 
+                        <button
+                            onClick={() => navigate("/")}
+                            className="mt-6 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700"
+                        >
+                            Continue Shopping
+                        </button>
+
                     </div>
 
                 ) : (
 
-
-                    /* CART WITH ITEMS */
-
                     <div className="grid lg:grid-cols-3 gap-8">
 
 
-                        {/* =========================
-                            CART ITEMS
-                        ========================= */}
+                        {/* Cart Items */}
 
                         <div className="lg:col-span-2 space-y-5">
 
@@ -293,8 +228,7 @@ function Cart() {
                                     className="bg-white rounded-xl shadow-lg p-5 flex flex-col md:flex-row gap-5"
                                 >
 
-
-                                    {/* PRODUCT IMAGE */}
+                                    {/* Product Image */}
 
                                     <img
                                         src={item.imageUrl}
@@ -303,7 +237,7 @@ function Cart() {
                                     />
 
 
-                                    {/* PRODUCT DETAILS */}
+                                    {/* Product Information */}
 
                                     <div className="flex-1">
 
@@ -322,10 +256,9 @@ function Cart() {
                                         </p>
 
 
-                                        {/* QUANTITY */}
+                                        {/* Quantity */}
 
                                         <div className="flex items-center gap-4 mt-5">
-
 
                                             <button
                                                 onClick={() =>
@@ -354,7 +287,7 @@ function Cart() {
                                         </div>
 
 
-                                        {/* REMOVE */}
+                                        {/* Remove */}
 
                                         <button
                                             onClick={() =>
@@ -374,9 +307,7 @@ function Cart() {
                         </div>
 
 
-                        {/* =========================
-                            ORDER SUMMARY
-                        ========================= */}
+                        {/* Cart Summary */}
 
                         <div className="bg-white rounded-xl shadow-lg p-6 h-fit">
 
@@ -402,13 +333,23 @@ function Cart() {
                             </div>
 
 
-                            {/* CHECKOUT BUTTON */}
+                            {/* Checkout */}
 
                             <button
-                                onClick={handleCheckout}
+                                onClick={() => navigate("/checkout")}
                                 className="w-full bg-blue-600 text-white py-3 rounded-lg mt-6 hover:bg-blue-700"
                             >
                                 Proceed to Checkout
+                            </button>
+
+
+                            {/* Continue Shopping */}
+
+                            <button
+                                onClick={() => navigate("/")}
+                                className="w-full bg-gray-200 text-gray-800 py-3 rounded-lg mt-3 hover:bg-gray-300"
+                            >
+                                Continue Shopping
                             </button>
 
                         </div>
