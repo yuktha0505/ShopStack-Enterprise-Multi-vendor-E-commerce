@@ -1,4 +1,7 @@
 package com.shopstack.backend.enums;
 
-public class CouponStatus {
+public enum CouponStatus {
+    PENDING,
+    APPROVED,
+    REJECTED
 }

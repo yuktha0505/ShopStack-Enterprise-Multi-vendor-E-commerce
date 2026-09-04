@@ -20,37 +20,54 @@ function Login() {
                 password,
             });
 
-            console.log(response.data);
-            console.log(response.data.token);
-            console.log(response.data.role);
+            console.log("LOGIN RESPONSE:", response.data);
 
-            // Store JWT Token
-            localStorage.setItem("token", response.data.token);
+            const token = response.data.token;
+            const role = response.data.role;
 
-            // Store User Role
-            localStorage.setItem("role", response.data.role);
+            console.log("NEW TOKEN:", token);
+            console.log("ROLE:", role);
+
+            // Store NEW JWT
+            localStorage.setItem("token", token);
+
+            // Store role
+            localStorage.setItem("role", role);
 
             alert("Login Successful!");
 
-            // Redirect based on role
-            if (response.data.role === "VENDOR") {
+            // Redirect according to role
+            if (role === "ADMIN") {
+
+                navigate("/admin/dashboard");
+
+            } else if (role === "VENDOR") {
+
                 navigate("/vendor/dashboard");
+
             } else {
+
                 navigate("/home");
             }
 
         } catch (error) {
 
-            console.error(error);
+            console.error("Login error:", error);
 
             if (error.response) {
-                alert(error.response.data);
+
+                alert(
+                    error.response.data ||
+                    "Login failed"
+                );
+
             } else {
-                alert("Unable to connect to server");
+
+                alert(
+                    "Unable to connect to server"
+                );
             }
-
         }
-
     };
 
     return (
@@ -66,14 +83,19 @@ function Login() {
                     Welcome Back
                 </p>
 
-                <form onSubmit={handleLogin} className="mt-8 space-y-5">
+                <form
+                    onSubmit={handleLogin}
+                    className="mt-8 space-y-5"
+                >
 
                     <input
                         type="email"
                         placeholder="Email"
                         className="w-full border rounded-lg px-4 py-3"
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        onChange={(e) =>
+                            setEmail(e.target.value)
+                        }
                         required
                     />
 
@@ -82,7 +104,9 @@ function Login() {
                         placeholder="Password"
                         className="w-full border rounded-lg px-4 py-3"
                         value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        onChange={(e) =>
+                            setPassword(e.target.value)
+                        }
                         required
                     />
 
@@ -96,13 +120,16 @@ function Login() {
                 </form>
 
                 <p className="text-center mt-6">
+
                     Don't have an account?{" "}
+
                     <Link
                         to="/register"
                         className="text-blue-600 hover:underline"
                     >
                         Create Account
                     </Link>
+
                 </p>
 
             </div>

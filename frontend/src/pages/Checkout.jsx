@@ -1,199 +1,112 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
-import Navbar from "../components/Navbar";
-import AddressSection from "../components/AddressSection";
 
-function Checkout() {
+const API = "http://localhost:8080";
 
-    const navigate = useNavigate();
-
-    const [cart, setCart] = useState(null);
-
+const Checkout = () => {
+    const [cartItems, setCartItems] = useState([]);
+    const [addresses, setAddresses] = useState([]);
     const [selectedAddress, setSelectedAddress] = useState(null);
 
-    const [paymentMethod, setPaymentMethod] = useState("ONLINE");
+    const [paymentMethod, setPaymentMethod] = useState("RAZORPAY");
 
-    const [loading, setLoading] = useState(true);
-    const [paymentLoading, setPaymentLoading] = useState(false);
+    const [couponCode, setCouponCode] = useState("");
+    const [couponDiscount, setCouponDiscount] = useState(0);
+    const [couponFinalAmount, setCouponFinalAmount] = useState(null);
+    const [couponMessage, setCouponMessage] = useState("");
+    const [couponError, setCouponError] = useState("");
 
+    const [loading, setLoading] = useState(false);
+    const [placingOrder, setPlacingOrder] = useState(false);
 
-    // --------------------------------------------------
-    // FETCH CART
-    // --------------------------------------------------
+    const token = localStorage.getItem("token");
+
+    // =========================================================
+    // LOAD CART + ADDRESSES
+    // =========================================================
 
     useEffect(() => {
-
-        const fetchCart = async () => {
-
-            try {
-
-                const token = localStorage.getItem("token");
-
-                const response = await axios.get(
-                    "http://localhost:8080/api/cart",
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    }
-                );
-
-                setCart(response.data);
-
-            } catch (error) {
-
-                console.error(error);
-
-                alert("Failed to load cart");
-
-            } finally {
-
-                setLoading(false);
-
-            }
-        };
-
-
         fetchCart();
-
+        fetchAddresses();
     }, []);
 
-
-    // --------------------------------------------------
-    // CALCULATE TOTAL
-    // --------------------------------------------------
-
-    const getTotalAmount = () => {
-
-        if (!cart) {
-            return 0;
-        }
-
-        // If your backend already returns total
-        if (cart.total !== undefined && cart.total !== null) {
-            return Number(cart.total);
-        }
-
-        // Fallback calculation
-        if (cart.items && Array.isArray(cart.items)) {
-
-            return cart.items.reduce(
-                (total, item) => {
-
-                    const price =
-                        item.finalPrice ??
-                        item.price ??
-                        0;
-
-                    const quantity =
-                        item.quantity ??
-                        1;
-
-                    return total + Number(price) * Number(quantity);
-
-                },
-                0
-            );
-        }
-
-        return 0;
-    };
-
-
-    const totalAmount = getTotalAmount();
-
-
-    // --------------------------------------------------
-    // FORMAT CURRENCY
-    // --------------------------------------------------
-
-    const formatPrice = (price) => {
-
-        return Number(price).toLocaleString("en-IN", {
-            style: "currency",
-            currency: "INR",
-            maximumFractionDigits: 2
-        });
-
-    };
-
-
-    // --------------------------------------------------
-    // CREATE SHOPSTACK ORDER
-    // --------------------------------------------------
-
-    const createShopStackOrder = async (
-        razorpayPaymentId = null,
-        razorpayOrderId = null
-    ) => {
-
-        const token = localStorage.getItem("token");
-
-        /*
-         * This is the information we send to your
-         * existing OrderController.
-         *
-         * We keep addressId so the backend can associate
-         * the order with the selected saved address.
-         */
-
-        const orderData = {
-
-            addressId: selectedAddress.id,
-
-            paymentMethod: paymentMethod,
-
-            paymentStatus:
-                paymentMethod === "ONLINE"
-                    ? "PAID"
-                    : "PENDING",
-
-            razorpayPaymentId:
-            razorpayPaymentId,
-
-            razorpayOrderId:
-            razorpayOrderId
-
-        };
-
-
-        const response = await axios.post(
-            "http://localhost:8080/api/orders",
-            orderData,
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json"
+    const fetchCart = async () => {
+        try {
+            const response = await axios.get(
+                `${API}/api/cart`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
                 }
-            }
-        );
+            );
 
-        return response.data;
+            setCartItems(response.data);
+        } catch (error) {
+            console.error("Error loading cart:", error);
+        }
     };
 
+    const fetchAddresses = async () => {
+        try {
+            const response = await axios.get(
+                `${API}/api/addresses`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
 
-    // --------------------------------------------------
-    // RAZORPAY PAYMENT
-    // --------------------------------------------------
+            setAddresses(response.data);
 
-    const startRazorpayPayment = async () => {
+            if (response.data.length > 0) {
+                setSelectedAddress(response.data[0]);
+            }
+        } catch (error) {
+            console.error("Error loading addresses:", error);
+        }
+    };
+
+    // =========================================================
+    // CALCULATE CART TOTAL
+    // =========================================================
+
+    const totalAmount = cartItems.reduce(
+        (total, item) =>
+            total +
+            Number(item.product?.finalPrice || item.product?.price || 0) *
+            Number(item.quantity || 1),
+        0
+    );
+
+    const formatPrice = (amount) => {
+        return `₹${Number(amount || 0).toFixed(2)}`;
+    };
+
+    // =========================================================
+    // APPLY COUPON
+    // =========================================================
+
+    const handleApplyCoupon = async () => {
+
+        if (!couponCode.trim()) {
+            setCouponError("Please enter a coupon code");
+            setCouponMessage("");
+            return;
+        }
 
         try {
 
-            setPaymentLoading(true);
+            setLoading(true);
+            setCouponError("");
+            setCouponMessage("");
 
-            const token = localStorage.getItem("token");
-
-
-            // ------------------------------------------
-            // 1. CREATE RAZORPAY ORDER
-            // ------------------------------------------
-
-            const orderResponse = await axios.post(
-                "http://localhost:8080/api/payment/create-order",
+            const response = await axios.post(
+                `${API}/api/coupons/apply`,
                 {
-                    amount: totalAmount
+                    couponCode: couponCode.trim(),
+                    cartAmount: totalAmount
                 },
                 {
                     headers: {
@@ -203,633 +116,587 @@ function Checkout() {
                 }
             );
 
+            console.log("Coupon response:", response.data);
 
-            /*
-             * Your backend currently returns:
-             *
-             * return order.toString();
-             *
-             * Therefore Axios receives a JSON string.
-             */
+            const discount =
+                Number(response.data.discountAmount || 0);
 
-            let razorpayOrder = orderResponse.data;
+            const finalAmount =
+                Number(response.data.finalAmount || totalAmount);
 
-            if (typeof razorpayOrder === "string") {
+            setCouponDiscount(discount);
+            setCouponFinalAmount(finalAmount);
 
-                razorpayOrder =
-                    JSON.parse(razorpayOrder);
-
-            }
-
-
-            console.log(
-                "Razorpay Order:",
-                razorpayOrder
+            setCouponMessage(
+                `Coupon applied successfully! You saved ${formatPrice(discount)}`
             );
 
+        } catch (error) {
 
-            // ------------------------------------------
-            // 2. RAZORPAY CHECKOUT OPTIONS
-            // ------------------------------------------
+            console.error(
+                "Coupon error:",
+                error.response?.data || error
+            );
 
-            const options = {
+            setCouponDiscount(0);
+            setCouponFinalAmount(null);
 
-                key: "rzp_test_TPYmZHtZ94GGNi",
+            setCouponError(
+                error.response?.data?.message ||
+                error.response?.data ||
+                "Invalid coupon"
+            );
 
-                amount: razorpayOrder.amount,
+        } finally {
+            setLoading(false);
+        }
+    };
 
-                currency: razorpayOrder.currency,
+    // =========================================================
+    // REMOVE COUPON
+    // =========================================================
 
-                name: "ShopStack",
+    const handleRemoveCoupon = () => {
 
-                description: "ShopStack Order",
+        setCouponCode("");
+        setCouponDiscount(0);
+        setCouponFinalAmount(null);
+        setCouponMessage("");
+        setCouponError("");
+    };
 
-                order_id: razorpayOrder.id,
+    // =========================================================
+    // FINAL PAYABLE AMOUNT
+    // =========================================================
 
+    const payableAmount =
+        couponFinalAmount !== null
+            ? Number(couponFinalAmount)
+            : Number(totalAmount);
 
-                // --------------------------------------
-                // PAYMENT SUCCESS
-                // --------------------------------------
+    // =========================================================
+    // PLACE ORDER
+    // =========================================================
 
-                handler: async function (response) {
+    const handlePlaceOrder = async () => {
 
-                    try {
+        if (!selectedAddress) {
+            alert("Please select an address");
+            return;
+        }
 
-                        console.log(
-                            "Razorpay response:",
-                            response
-                        );
+        if (cartItems.length === 0) {
+            alert("Your cart is empty");
+            return;
+        }
 
+        try {
 
-                        // ----------------------------------
-                        // 3. VERIFY PAYMENT
-                        // ----------------------------------
+            setPlacingOrder(true);
 
-                        const verificationResponse =
+            // -------------------------------------------------
+            // RAZORPAY
+            // -------------------------------------------------
+
+            if (paymentMethod === "RAZORPAY") {
+
+                // IMPORTANT:
+                // Use payableAmount instead of totalAmount.
+                // This makes Razorpay charge the discounted amount.
+
+                const orderResponse = await axios.post(
+                    `${API}/api/payment/create-order`,
+                    {
+                        amount: payableAmount
+                    },
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            "Content-Type": "application/json"
+                        }
+                    }
+                );
+
+                console.log(
+                    "Razorpay order:",
+                    orderResponse.data
+                );
+
+                const razorpayOrderId =
+                    orderResponse.data.id;
+
+                const options = {
+
+                    key: orderResponse.data.key,
+
+                    amount:
+                    orderResponse.data.amount,
+
+                    currency:
+                        orderResponse.data.currency || "INR",
+
+                    name: "ShopStack",
+
+                    description:
+                        "ShopStack Order",
+
+                    order_id:
+                    razorpayOrderId,
+
+                    handler: async function (paymentResponse) {
+
+                        try {
+
+                            // -----------------------------------------
+                            // CREATE SHOPSTACK ORDER AFTER PAYMENT
+                            // -----------------------------------------
+
                             await axios.post(
-
-                                "http://localhost:8080/api/payment/verify",
-
+                                `${API}/api/orders`,
                                 {
-                                    razorpayOrderId:
-                                    response.razorpay_order_id,
+                                    addressId:
+                                    selectedAddress.id,
+
+                                    paymentMethod:
+                                    paymentMethod,
+
+                                    paymentStatus:
+                                        "PAID",
 
                                     razorpayPaymentId:
-                                    response.razorpay_payment_id,
+                                    paymentResponse.razorpay_payment_id,
 
-                                    razorpaySignature:
-                                    response.razorpay_signature
+                                    razorpayOrderId:
+                                    paymentResponse.razorpay_order_id,
+
+                                    couponCode:
+                                        couponCode || null,
+
+                                    couponDiscount:
+                                    couponDiscount,
+
+                                    finalAmount:
+                                    payableAmount
                                 },
-
                                 {
                                     headers: {
                                         Authorization:
                                             `Bearer ${token}`,
+
                                         "Content-Type":
                                             "application/json"
                                     }
                                 }
                             );
 
+                            alert(
+                                "Order placed successfully!"
+                            );
 
-                        console.log(
-                            "Payment verification:",
-                            verificationResponse.data
-                        );
+                            window.location.href =
+                                "/orders";
 
+                        } catch (error) {
 
-                        // ----------------------------------
-                        // 4. CREATE SHOPSTACK ORDER
-                        // ----------------------------------
+                            console.error(
+                                "Order creation error:",
+                                error.response?.data || error
+                            );
 
-                        await createShopStackOrder(
+                            alert(
+                                "Payment succeeded, but order creation failed. Please contact support."
+                            );
+                        }
+                    },
 
-                            response.razorpay_payment_id,
+                    prefill: {
+                        name:
+                            localStorage.getItem("userName") || "",
 
-                            response.razorpay_order_id
+                        email:
+                            localStorage.getItem("userEmail") || ""
+                    },
 
-                        );
-
-
-                        alert(
-                            "Payment successful! Order placed successfully."
-                        );
-
-
-                        navigate("/order-success");
-
-                    } catch (error) {
-
-                        console.error(
-                            "Payment verification error:",
-                            error
-                        );
-
-                        alert(
-                            error.response?.data ||
-                            "Payment verification failed"
-                        );
-
-                    } finally {
-
-                        setPaymentLoading(false);
-
+                    theme: {
+                        color: "#2563eb"
                     }
-                },
+                };
 
+                const razorpay =
+                    new window.Razorpay(options);
 
-                // --------------------------------------
-                // PAYMENT FAILED
-                // --------------------------------------
+                razorpay.open();
 
-                modal: {
-
-                    ondismiss: function () {
-
-                        setPaymentLoading(false);
-
-                    }
-
-                },
-
-
-                prefill: {
-
-                    name:
-                        selectedAddress?.fullName || "",
-
-                    contact:
-                        selectedAddress?.phone || ""
-
-                },
-
-
-                notes: {
-
-                    addressId:
-                        String(selectedAddress.id)
-
-                },
-
-
-                theme: {
-
-                    color: "#2563eb"
-
-                }
-
-            };
-
-
-            // ------------------------------------------
-            // 5. OPEN RAZORPAY
-            // ------------------------------------------
-
-            if (!window.Razorpay) {
-
-                throw new Error(
-                    "Razorpay SDK not loaded"
-                );
-
+                return;
             }
 
+            // -------------------------------------------------
+            // COD
+            // -------------------------------------------------
 
-            const razorpay =
-                new window.Razorpay(options);
+            if (paymentMethod === "COD") {
 
+                await axios.post(
+                    `${API}/api/orders`,
+                    {
+                        addressId:
+                        selectedAddress.id,
 
-            razorpay.on(
-                "payment.failed",
-                function (response) {
+                        paymentMethod:
+                            "COD",
 
-                    console.error(
-                        "Payment failed:",
-                        response.error
-                    );
+                        paymentStatus:
+                            "PENDING",
 
-                    alert(
-                        "Payment failed: " +
-                        response.error.description
-                    );
+                        couponCode:
+                            couponCode || null,
 
-                    setPaymentLoading(false);
+                        couponDiscount:
+                        couponDiscount,
 
-                }
-            );
+                        finalAmount:
+                        payableAmount
+                    },
+                    {
+                        headers: {
+                            Authorization:
+                                `Bearer ${token}`,
 
+                            "Content-Type":
+                                "application/json"
+                        }
+                    }
+                );
 
-            razorpay.open();
+                alert(
+                    "Order placed successfully!"
+                );
 
-
-        } catch (error) {
-
-            console.error(
-                "Razorpay error:",
-                error
-            );
-
-            alert(
-                error.response?.data ||
-                error.message ||
-                "Unable to start payment"
-            );
-
-            setPaymentLoading(false);
-
-        }
-    };
-
-
-    // --------------------------------------------------
-    // COD ORDER
-    // --------------------------------------------------
-
-    const handleCashOnDelivery = async () => {
-
-        try {
-
-            setPaymentLoading(true);
-
-            await createShopStackOrder();
-
-            alert(
-                "Order placed successfully!"
-            );
-
-            navigate("/order-success");
+                window.location.href =
+                    "/orders";
+            }
 
         } catch (error) {
 
             console.error(
-                "COD order error:",
-                error
+                "Place order error:",
+                error.response?.data || error
             );
 
             alert(
-                error.response?.data ||
+                error.response?.data?.message ||
                 "Failed to place order"
             );
 
         } finally {
 
-            setPaymentLoading(false);
-
+            setPlacingOrder(false);
         }
     };
 
-
-    // --------------------------------------------------
-    // MAIN CHECKOUT HANDLER
-    // --------------------------------------------------
-
-    const handlePlaceOrder = async () => {
-
-        // ----------------------------------------------
-        // ADDRESS VALIDATION
-        // ----------------------------------------------
-
-        if (!selectedAddress) {
-
-            alert(
-                "Please select a delivery address"
-            );
-
-            return;
-        }
-
-
-        // ----------------------------------------------
-        // CART VALIDATION
-        // ----------------------------------------------
-
-        if (!cart || totalAmount <= 0) {
-
-            alert(
-                "Your cart is empty"
-            );
-
-            return;
-        }
-
-
-        // ----------------------------------------------
-        // PAYMENT METHOD
-        // ----------------------------------------------
-
-        if (paymentMethod === "ONLINE") {
-
-            await startRazorpayPayment();
-
-        } else {
-
-            await handleCashOnDelivery();
-
-        }
-
-    };
-
-
-    // --------------------------------------------------
-    // LOADING
-    // --------------------------------------------------
-
-    if (loading) {
-
-        return (
-
-            <div className="min-h-screen bg-gray-100">
-
-                <Navbar />
-
-                <div className="flex justify-center items-center h-96">
-
-                    <p className="text-xl font-semibold">
-                        Loading checkout...
-                    </p>
-
-                </div>
-
-            </div>
-
-        );
-    }
-
-
-    // --------------------------------------------------
-    // EMPTY CART
-    // --------------------------------------------------
-
-    if (!cart || !cart.items || cart.items.length === 0) {
-
-        return (
-
-            <div className="min-h-screen bg-gray-100">
-
-                <Navbar />
-
-                <div className="flex flex-col justify-center items-center h-96">
-
-                    <h2 className="text-2xl font-bold">
-                        Your cart is empty
-                    </h2>
-
-                    <button
-                        onClick={() => navigate("/products")}
-                        className="mt-5 bg-blue-600 text-white px-6 py-3 rounded-lg"
-                    >
-                        Continue Shopping
-                    </button>
-
-                </div>
-
-            </div>
-
-        );
-    }
-
-
-    // --------------------------------------------------
+    // =========================================================
     // UI
-    // --------------------------------------------------
+    // =========================================================
 
     return (
+        <div className="min-h-screen bg-gray-100 py-8 px-4">
 
-        <div className="min-h-screen bg-gray-100">
+            <div className="max-w-5xl mx-auto">
 
-            <Navbar />
-
-
-            <div className="max-w-7xl mx-auto p-6">
-
-
-                {/* PAGE TITLE */}
-
-                <h1 className="text-3xl font-bold text-blue-600 mb-8">
-
+                <h1 className="text-3xl font-bold mb-8">
                     Checkout
-
                 </h1>
 
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-                <div className="grid lg:grid-cols-2 gap-8">
+                    {/* ================================================= */}
+                    {/* LEFT SIDE */}
+                    {/* ================================================= */}
 
-
-                    {/* ==================================
-                        LEFT SIDE
-                    ================================== */}
-
-                    <div className="space-y-8">
-
+                    <div className="lg:col-span-2 space-y-6">
 
                         {/* ADDRESS */}
 
-                        <AddressSection
-                            selectedAddress={
-                                selectedAddress
-                            }
-                            setSelectedAddress={
-                                setSelectedAddress
-                            }
-                        />
+                        <div className="bg-white rounded-lg shadow p-6">
 
-
-                        {/* PAYMENT */}
-
-                        <div className="bg-white rounded-xl shadow-lg p-6">
-
-                            <h2 className="text-2xl font-bold mb-5">
-
-                                Payment Method
-
+                            <h2 className="text-xl font-semibold mb-4">
+                                Delivery Address
                             </h2>
 
+                            {addresses.length === 0 ? (
 
-                            {/* ONLINE PAYMENT */}
+                                <p className="text-gray-500">
+                                    No addresses available.
+                                </p>
 
-                            <label
-                                className={`flex items-center gap-3 border rounded-lg p-4 cursor-pointer mb-4 ${
-                                    paymentMethod === "ONLINE"
-                                        ? "border-blue-600 bg-blue-50"
-                                        : "border-gray-300"
-                                }`}
-                            >
+                            ) : (
 
-                                <input
-                                    type="radio"
-                                    name="paymentMethod"
-                                    value="ONLINE"
-                                    checked={
-                                        paymentMethod === "ONLINE"
-                                    }
-                                    onChange={(e) =>
-                                        setPaymentMethod(
-                                            e.target.value
-                                        )
-                                    }
-                                />
+                                <div className="space-y-3">
 
-                                <div>
+                                    {addresses.map((address) => (
 
-                                    <p className="font-semibold">
-                                        Online Payment
-                                    </p>
+                                        <label
+                                            key={address.id}
+                                            className="flex items-start gap-3 border rounded-lg p-4 cursor-pointer"
+                                        >
 
-                                    <p className="text-sm text-gray-500">
-                                        Pay securely using Razorpay
-                                    </p>
+                                            <input
+                                                type="radio"
+                                                name="address"
+                                                checked={
+                                                    selectedAddress?.id ===
+                                                    address.id
+                                                }
+                                                onChange={() =>
+                                                    setSelectedAddress(
+                                                        address
+                                                    )
+                                                }
+                                            />
 
-                                </div>
+                                            <div>
 
-                            </label>
+                                                <p className="font-medium">
+                                                    {address.name}
+                                                </p>
 
+                                                <p className="text-gray-600">
+                                                    {address.addressLine1}
+                                                </p>
 
-                            {/* COD */}
+                                                <p className="text-gray-600">
+                                                    {address.city},{" "}
+                                                    {address.state}{" "}
+                                                    {address.pincode}
+                                                </p>
 
-                            <label
-                                className={`flex items-center gap-3 border rounded-lg p-4 cursor-pointer ${
-                                    paymentMethod === "COD"
-                                        ? "border-blue-600 bg-blue-50"
-                                        : "border-gray-300"
-                                }`}
-                            >
+                                            </div>
 
-                                <input
-                                    type="radio"
-                                    name="paymentMethod"
-                                    value="COD"
-                                    checked={
-                                        paymentMethod === "COD"
-                                    }
-                                    onChange={(e) =>
-                                        setPaymentMethod(
-                                            e.target.value
-                                        )
-                                    }
-                                />
+                                        </label>
 
-                                <div>
-
-                                    <p className="font-semibold">
-                                        Cash on Delivery
-                                    </p>
-
-                                    <p className="text-sm text-gray-500">
-                                        Pay when your order arrives
-                                    </p>
+                                    ))}
 
                                 </div>
 
-                            </label>
+                            )}
+
+                        </div>
+
+                        {/* CART ITEMS */}
+
+                        <div className="bg-white rounded-lg shadow p-6">
+
+                            <h2 className="text-xl font-semibold mb-4">
+                                Your Items
+                            </h2>
+
+                            {cartItems.length === 0 ? (
+
+                                <p className="text-gray-500">
+                                    Your cart is empty.
+                                </p>
+
+                            ) : (
+
+                                <div className="space-y-4">
+
+                                    {cartItems.map((item) => {
+
+                                        const price =
+                                            Number(
+                                                item.product?.finalPrice ||
+                                                item.product?.price ||
+                                                0
+                                            );
+
+                                        const quantity =
+                                            Number(
+                                                item.quantity || 1
+                                            );
+
+                                        return (
+
+                                            <div
+                                                key={item.id}
+                                                className="flex justify-between items-center border-b pb-4"
+                                            >
+
+                                                <div>
+
+                                                    <p className="font-medium">
+                                                        {
+                                                            item.product?.name
+                                                        }
+                                                    </p>
+
+                                                    <p className="text-gray-500">
+                                                        Qty: {quantity}
+                                                    </p>
+
+                                                </div>
+
+                                                <p className="font-semibold">
+                                                    {formatPrice(
+                                                        price * quantity
+                                                    )}
+                                                </p>
+
+                                            </div>
+
+                                        );
+                                    })}
+
+                                </div>
+
+                            )}
+
+                        </div>
+
+                        {/* ================================================= */}
+                        {/* COUPON */}
+                        {/* ================================================= */}
+
+                        <div className="bg-white rounded-lg shadow p-6">
+
+                            <h2 className="text-xl font-semibold mb-4">
+                                Apply Coupon
+                            </h2>
+
+                            <div className="flex gap-3">
+
+                                <input
+                                    type="text"
+                                    value={couponCode}
+                                    onChange={(e) =>
+                                        setCouponCode(
+                                            e.target.value.toUpperCase()
+                                        )
+                                    }
+                                    placeholder="Enter coupon code"
+                                    className="flex-1 border rounded-lg px-4 py-3"
+                                    disabled={
+                                        couponFinalAmount !== null
+                                    }
+                                />
+
+                                {couponFinalAmount === null ? (
+
+                                    <button
+                                        onClick={
+                                            handleApplyCoupon
+                                        }
+                                        disabled={loading}
+                                        className="bg-blue-600 text-white px-6 py-3 rounded-lg"
+                                    >
+                                        {loading
+                                            ? "Applying..."
+                                            : "Apply"}
+                                    </button>
+
+                                ) : (
+
+                                    <button
+                                        onClick={
+                                            handleRemoveCoupon
+                                        }
+                                        className="bg-red-500 text-white px-6 py-3 rounded-lg"
+                                    >
+                                        Remove
+                                    </button>
+
+                                )}
+
+                            </div>
+
+                            {couponMessage && (
+
+                                <p className="text-green-600 mt-3">
+                                    {couponMessage}
+                                </p>
+
+                            )}
+
+                            {couponError && (
+
+                                <p className="text-red-600 mt-3">
+                                    {couponError}
+                                </p>
+
+                            )}
+
+                        </div>
+
+                        {/* ================================================= */}
+                        {/* PAYMENT METHOD */}
+                        {/* ================================================= */}
+
+                        <div className="bg-white rounded-lg shadow p-6">
+
+                            <h2 className="text-xl font-semibold mb-4">
+                                Payment Method
+                            </h2>
+
+                            <div className="space-y-3">
+
+                                <label className="flex items-center gap-3">
+                                    <input
+                                        type="radio"
+                                        name="payment"
+                                        value="RAZORPAY"
+                                        checked={
+                                            paymentMethod ===
+                                            "RAZORPAY"
+                                        }
+                                        onChange={(e) =>
+                                            setPaymentMethod(
+                                                e.target.value
+                                            )
+                                        }
+                                    />
+
+                                    Razorpay
+                                </label>
+
+                                <label className="flex items-center gap-3">
+                                    <input
+                                        type="radio"
+                                        name="payment"
+                                        value="COD"
+                                        checked={
+                                            paymentMethod ===
+                                            "COD"
+                                        }
+                                        onChange={(e) =>
+                                            setPaymentMethod(
+                                                e.target.value
+                                            )
+                                        }
+                                    />
+
+                                    Cash on Delivery
+                                </label>
+
+                            </div>
 
                         </div>
 
                     </div>
 
-
-                    {/* ==================================
-                        RIGHT SIDE
-                    ================================== */}
+                    {/* ================================================= */}
+                    {/* ORDER SUMMARY */}
+                    {/* ================================================= */}
 
                     <div>
 
-                        <div className="bg-white rounded-xl shadow-lg p-6 sticky top-5">
+                        <div className="bg-white rounded-lg shadow p-6 sticky top-6">
 
-
-                            <h2 className="text-2xl font-bold mb-6">
-
+                            <h2 className="text-xl font-semibold mb-6">
                                 Order Summary
-
                             </h2>
 
+                            <div className="space-y-4">
 
-                            {/* CART ITEMS */}
-
-                            <div className="space-y-5">
-
-                                {cart.items.map((item) => {
-
-                                    const product =
-                                        item.product || item;
-
-                                    const price =
-                                        item.finalPrice ??
-                                        product.finalPrice ??
-                                        item.price ??
-                                        product.price ??
-                                        0;
-
-                                    const quantity =
-                                        item.quantity ?? 1;
-
-
-                                    return (
-
-                                        <div
-                                            key={
-                                                item.id ||
-                                                product.id
-                                            }
-                                            className="flex gap-4 border-b pb-4"
-                                        >
-
-                                            <img
-                                                src={
-                                                    product.imageUrl ||
-                                                    item.imageUrl
-                                                }
-                                                alt={
-                                                    product.name ||
-                                                    item.name
-                                                }
-                                                className="w-20 h-20 object-cover rounded-lg"
-                                            />
-
-
-                                            <div className="flex-1">
-
-                                                <h3 className="font-semibold">
-
-                                                    {
-                                                        product.name ||
-                                                        item.name
-                                                    }
-
-                                                </h3>
-
-
-                                                <p className="text-gray-500">
-
-                                                    Qty: {quantity}
-
-                                                </p>
-
-
-                                                <p className="font-semibold">
-
-                                                    {formatPrice(
-                                                        Number(price) *
-                                                        Number(quantity)
-                                                    )}
-
-                                                </p>
-
-                                            </div>
-
-                                        </div>
-
-                                    );
-
-                                })}
-
-                            </div>
-
-
-                            {/* TOTAL */}
-
-                            <div className="border-t mt-6 pt-5">
-
-                                <div className="flex justify-between text-lg">
-
+                                <div className="flex justify-between">
                                     <span>
                                         Subtotal
                                     </span>
@@ -839,26 +706,39 @@ function Checkout() {
                                             totalAmount
                                         )}
                                     </span>
-
                                 </div>
 
+                                {couponDiscount > 0 && (
 
-                                <div className="flex justify-between text-lg mt-2">
+                                    <div className="flex justify-between text-green-600">
 
+                                        <span>
+                                            Coupon Discount
+                                        </span>
+
+                                        <span>
+                                            - {formatPrice(
+                                            couponDiscount
+                                        )}
+                                        </span>
+
+                                    </div>
+
+                                )}
+
+                                <div className="flex justify-between">
                                     <span>
                                         Delivery
                                     </span>
 
-                                    <span className="text-green-600">
-
+                                    <span>
                                         FREE
-
                                     </span>
-
                                 </div>
 
+                                <hr />
 
-                                <div className="flex justify-between text-2xl font-bold mt-5">
+                                <div className="flex justify-between text-xl font-bold">
 
                                     <span>
                                         Total
@@ -867,7 +747,7 @@ function Checkout() {
                                     <span className="text-blue-600">
 
                                         {formatPrice(
-                                            totalAmount
+                                            payableAmount
                                         )}
 
                                     </span>
@@ -876,85 +756,25 @@ function Checkout() {
 
                             </div>
 
-
-                            {/* SELECTED ADDRESS PREVIEW */}
-
-                            {selectedAddress && (
-
-                                <div className="mt-6 bg-gray-50 rounded-lg p-4">
-
-                                    <p className="font-bold mb-2">
-
-                                        Delivering to:
-
-                                    </p>
-
-                                    <p className="font-semibold">
-
-                                        {selectedAddress.fullName}
-
-                                    </p>
-
-                                    <p className="text-gray-600">
-
-                                        {selectedAddress.addressLine}
-
-                                    </p>
-
-                                    <p className="text-gray-600">
-
-                                        {selectedAddress.city},{" "}
-                                        {selectedAddress.state}{" "}
-                                        -{" "}
-                                        {selectedAddress.pincode}
-
-                                    </p>
-
-                                    <p className="text-gray-600">
-
-                                        Phone:{" "}
-                                        {selectedAddress.phone}
-
-                                    </p>
-
-                                </div>
-
-                            )}
-
-
-                            {/* PLACE ORDER */}
-
                             <button
-                                onClick={handlePlaceOrder}
-                                disabled={paymentLoading}
-                                className={`w-full mt-6 py-4 rounded-lg text-white font-bold text-lg ${
-                                    paymentLoading
-                                        ? "bg-gray-400 cursor-not-allowed"
-                                        : "bg-green-600 hover:bg-green-700"
-                                }`}
+                                onClick={
+                                    handlePlaceOrder
+                                }
+                                disabled={
+                                    placingOrder ||
+                                    cartItems.length === 0 ||
+                                    !selectedAddress
+                                }
+                                className="w-full mt-6 bg-blue-600 text-white py-4 rounded-lg font-semibold disabled:bg-gray-400"
                             >
 
-                                {paymentLoading
-
+                                {placingOrder
                                     ? "Processing..."
-
-                                    : paymentMethod === "ONLINE"
-
-                                        ? `Pay ${formatPrice(totalAmount)}`
-
-                                        : `Place Order - ${formatPrice(totalAmount)}`
-
-                                }
+                                    : `Pay ${formatPrice(
+                                        payableAmount
+                                    )}`}
 
                             </button>
-
-
-                            <p className="text-center text-sm text-gray-500 mt-3">
-
-                                Your payment information is securely
-                                processed by Razorpay.
-
-                            </p>
 
                         </div>
 
@@ -965,8 +785,7 @@ function Checkout() {
             </div>
 
         </div>
-
     );
-}
+};
 
 export default Checkout;

@@ -1,4 +1,6 @@
 package com.shopstack.backend.enums;
 
-public class DiscountType {
+public enum DiscountType {
+    PERCENTAGE,
+    FIXED
 }

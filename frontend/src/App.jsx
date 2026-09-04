@@ -18,6 +18,13 @@ import Checkout from "./pages/Checkout";
 import VendorOrders from "./pages/VendorOrders";
 import OrderSuccess from "./pages/OrderSuccess";
 import Notifications from "./pages/Notifications";
+import AdminDashboard from "./pages/AdminDashboard";
+import VendorManagement from "./pages/VendorManagement";
+import AdminOrders from "./pages/AdminOrders";
+import AdminVendors from "./pages/AdminVendors";
+import AdminAnalytics from "./pages/AdminAnalytics";
+import AdminCommissions from "./pages/AdminCommissions";
+import AdminCoupons from "./pages/AdminCoupons";
 
 function App() {
     return (
@@ -134,6 +141,37 @@ function App() {
                 <Route
                     path="/order-success"
                     element={<OrderSuccess />}
+                />
+                <Route
+                    path="/admin/dashboard"
+                    element={<AdminDashboard />}
+                />
+                <Route
+                    path="/admin/vendors"
+                    element={<VendorManagement />}
+                />
+
+                <Route
+                    path="/admin/orders"
+                    element={<AdminOrders />}
+                />
+
+                <Route
+                    path="/admin/vendors"
+                    element={<AdminVendors />}
+                />
+
+                <Route
+                    path="/admin/analytics"
+                    element={<AdminAnalytics />}
+                />
+                <Route
+                    path="/admin/commissions"
+                    element={<AdminCommissions />}
+                />
+                <Route
+                    path="/admin/coupons"
+                    element={<AdminCoupons />}
                 />
             </Routes>
         </BrowserRouter>

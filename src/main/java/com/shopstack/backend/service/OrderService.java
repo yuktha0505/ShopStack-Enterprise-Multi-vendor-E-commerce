@@ -1,15 +1,22 @@
 package com.shopstack.backend.service;
 
 import com.shopstack.backend.dto.OrderItemResponse;
+import com.shopstack.backend.dto.OrderRequest;
 import com.shopstack.backend.dto.OrderResponse;
 import com.shopstack.backend.entity.Cart;
 import com.shopstack.backend.entity.CartItem;
+import com.shopstack.backend.entity.Coupon;
+import com.shopstack.backend.entity.CouponUsage;
 import com.shopstack.backend.entity.Order;
 import com.shopstack.backend.entity.OrderItem;
 import com.shopstack.backend.entity.OrderStatus;
 import com.shopstack.backend.entity.Product;
 import com.shopstack.backend.entity.User;
+import com.shopstack.backend.enums.CouponStatus;
+import com.shopstack.backend.enums.DiscountType;
 import com.shopstack.backend.repository.CartRepository;
+import com.shopstack.backend.repository.CouponRepository;
+import com.shopstack.backend.repository.CouponUsageRepository;
 import com.shopstack.backend.repository.OrderRepository;
 import com.shopstack.backend.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -33,6 +40,12 @@ public class OrderService {
     private CartRepository cartRepository;
 
     @Autowired
+    private CouponRepository couponRepository;
+
+    @Autowired
+    private CouponUsageRepository couponUsageRepository;
+
+    @Autowired
     private NotificationService notificationService;
 
 
@@ -41,36 +54,62 @@ public class OrderService {
     // =========================================================
 
     @Transactional
-    public OrderResponse placeOrder(String email) {
+    public OrderResponse placeOrder(
+            String email,
+            OrderRequest request
+    ) {
 
-        // 1. Find customer
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() ->
-                        new RuntimeException("User not found")
-                );
+        // =====================================================
+        // 1. FIND CUSTOMER
+        // =====================================================
+
+        User user =
+                userRepository.findByEmail(email)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "User not found"
+                                )
+                        );
 
 
-        // 2. Find customer's cart
-        Cart cart = cartRepository.findByUser(user)
-                .orElseThrow(() ->
-                        new RuntimeException("Cart not found")
-                );
+        // =====================================================
+        // 2. FIND CUSTOMER CART
+        // =====================================================
+
+        Cart cart =
+                cartRepository.findByUser(user)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Cart not found"
+                                )
+                        );
 
 
-        // 3. Check if cart is empty
+        // =====================================================
+        // 3. CHECK CART
+        // =====================================================
+
         if (cart.getItems() == null ||
                 cart.getItems().isEmpty()) {
 
-            throw new RuntimeException("Cart is empty");
+            throw new RuntimeException(
+                    "Cart is empty"
+            );
         }
 
 
-        // 4. Check stock before changing anything
-        for (CartItem cartItem : cart.getItems()) {
+        // =====================================================
+        // 4. CHECK STOCK
+        // =====================================================
 
-            Product product = cartItem.getProduct();
+        for (CartItem cartItem :
+                cart.getItems()) {
 
-            if (product.getStock() < cartItem.getQuantity()) {
+            Product product =
+                    cartItem.getProduct();
+
+            if (product.getStock() <
+                    cartItem.getQuantity()) {
 
                 throw new RuntimeException(
                         "Insufficient stock for product: "
@@ -80,28 +119,15 @@ public class OrderService {
         }
 
 
-        // 5. Create order
-        Order order = new Order();
+        // =====================================================
+        // 5. CALCULATE SUBTOTAL
+        // =====================================================
 
-        order.setUser(user);
-
-        order.setStatus(
-                OrderStatus.PLACED
-        );
-
-        order.setOrderDate(
-                LocalDateTime.now()
-        );
+        double subtotal = 0;
 
 
-        List<OrderItem> orderItems =
-                new ArrayList<>();
-
-        double totalAmount = 0;
-
-
-        // 6. Create order items
-        for (CartItem cartItem : cart.getItems()) {
+        for (CartItem cartItem :
+                cart.getItems()) {
 
             Product product =
                     cartItem.getProduct();
@@ -109,66 +135,486 @@ public class OrderService {
             int quantity =
                     cartItem.getQuantity();
 
+
             double price =
-                    product.getPrice();
+                    product.getFinalPrice() != null
+                            ? product.getFinalPrice()
+                            : product.getPrice();
 
-            double subtotal =
+
+            subtotal +=
                     price * quantity;
+        }
 
-            totalAmount += subtotal;
+
+        // =====================================================
+        // 6. COUPON VARIABLES
+        // =====================================================
+
+        Coupon appliedCoupon = null;
+
+        double discountAmount = 0;
+
+
+        // =====================================================
+        // 7. GET COUPON CODE FROM REQUEST
+        // =====================================================
+
+        String couponCode = null;
+
+        if (request != null) {
+
+            couponCode =
+                    request.getCouponCode();
+        }
+
+
+        // =====================================================
+        // 8. APPLY COUPON
+        // =====================================================
+
+        if (couponCode != null &&
+                !couponCode.trim().isEmpty()) {
+
+
+            String code =
+                    couponCode
+                            .trim()
+                            .toUpperCase();
+
+
+            // -------------------------------------------------
+            // FIND COUPON
+            // -------------------------------------------------
+
+            appliedCoupon =
+                    couponRepository
+                            .findByCode(code)
+                            .orElseThrow(() ->
+                                    new RuntimeException(
+                                            "Invalid coupon code"
+                                    )
+                            );
+
+
+            // CHECK APPROVAL STATUS
+
+            // =====================================================
+// CHECK PRODUCT ELIGIBILITY
+// =====================================================
+
+            if (appliedCoupon.getEligibleProducts() == null ||
+                    appliedCoupon.getEligibleProducts().isEmpty()) {
+
+                throw new RuntimeException(
+                        "This coupon is not valid for any products"
+                );
+            }
+
+            final Coupon couponForEligibility = appliedCoupon;
+
+
+            boolean eligibleProductFound =
+                    cart.getItems()
+                            .stream()
+                            .anyMatch(cartItem ->
+
+                                    couponForEligibility
+                                            .getEligibleProducts()
+                                            .stream()
+                                            .anyMatch(couponProduct ->
+
+                                                    couponProduct
+                                                            .getId()
+                                                            .equals(
+                                                                    cartItem
+                                                                            .getProduct()
+                                                                            .getId()
+                                                            )
+                                            )
+                            );
+
+
+            if (!eligibleProductFound) {
+
+                throw new RuntimeException(
+                        "This coupon is not applicable to the products in your cart"
+                );
+            }
+            LocalDateTime now =
+                    LocalDateTime.now();
+
+
+            // -------------------------------------------------
+            // CHECK ACTIVE
+            // -------------------------------------------------
+
+            if (!Boolean.TRUE.equals(
+                    appliedCoupon.getActive())) {
+
+                throw new RuntimeException(
+                        "Coupon is inactive"
+                );
+            }
+
+
+            // -------------------------------------------------
+            // CHECK START DATE
+            // -------------------------------------------------
+
+            if (appliedCoupon.getStartDate() != null &&
+                    now.isBefore(
+                            appliedCoupon.getStartDate()
+                    )) {
+
+                throw new RuntimeException(
+                        "Coupon is not active yet"
+                );
+            }
+
+
+            // -------------------------------------------------
+            // CHECK EXPIRY
+            // -------------------------------------------------
+
+            if (appliedCoupon.getExpiryDate() != null &&
+                    now.isAfter(
+                            appliedCoupon.getExpiryDate()
+                    )) {
+
+                throw new RuntimeException(
+                        "Coupon has expired"
+                );
+            }
+
+
+            // -------------------------------------------------
+            // CHECK USAGE LIMIT
+            // -------------------------------------------------
+
+            if (appliedCoupon.getUsageLimit() != null &&
+                    appliedCoupon.getUsedCount() >=
+                            appliedCoupon.getUsageLimit()) {
+
+                throw new RuntimeException(
+                        "Coupon usage limit reached"
+                );
+            }
+
+
+            // -------------------------------------------------
+            // CHECK MINIMUM ORDER
+            // -------------------------------------------------
+
+            if (appliedCoupon
+                    .getMinimumOrderAmount() != null &&
+                    subtotal <
+                            appliedCoupon
+                                    .getMinimumOrderAmount()) {
+
+                throw new RuntimeException(
+                        "Minimum order amount is ₹"
+                                + appliedCoupon
+                                .getMinimumOrderAmount()
+                );
+            }
+
+
+            // -------------------------------------------------
+            // CALCULATE DISCOUNT
+            // -------------------------------------------------
+
+            if (appliedCoupon.getDiscountType()
+                    == DiscountType.PERCENTAGE) {
+
+                discountAmount =
+                        subtotal *
+                                appliedCoupon
+                                        .getDiscountValue()
+                                / 100.0;
+
+            } else {
+
+                // FIXED DISCOUNT
+
+                discountAmount =
+                        appliedCoupon
+                                .getDiscountValue();
+            }
+
+
+            // -------------------------------------------------
+            // MAXIMUM DISCOUNT
+            // -------------------------------------------------
+
+            if (appliedCoupon
+                    .getMaximumDiscount() != null &&
+                    discountAmount >
+                            appliedCoupon
+                                    .getMaximumDiscount()) {
+
+                discountAmount =
+                        appliedCoupon
+                                .getMaximumDiscount();
+            }
+
+
+            // -------------------------------------------------
+            // DISCOUNT CANNOT EXCEED SUBTOTAL
+            // -------------------------------------------------
+
+            if (discountAmount > subtotal) {
+
+                discountAmount =
+                        subtotal;
+            }
+
+
+            // -------------------------------------------------
+            // ROUND DISCOUNT
+            // -------------------------------------------------
+
+            discountAmount =
+                    Math.round(
+                            discountAmount * 100.0
+                    ) / 100.0;
+        }
+
+
+        // =====================================================
+        // 9. CALCULATE FINAL AMOUNT
+        // =====================================================
+
+        double finalAmount =
+                subtotal - discountAmount;
+
+
+        finalAmount =
+                Math.round(
+                        finalAmount * 100.0
+                ) / 100.0;
+
+
+        // =====================================================
+        // 10. CREATE ORDER
+        // =====================================================
+
+        Order order =
+                new Order();
+
+
+        order.setUser(user);
+
+
+        order.setStatus(
+                OrderStatus.PLACED
+        );
+
+
+        order.setOrderDate(
+                LocalDateTime.now()
+        );
+
+
+        /*
+         * Store final payable amount.
+         */
+        order.setTotalAmount(
+                finalAmount
+        );
+
+
+        // =====================================================
+        // 11. CREATE ORDER ITEMS
+        // =====================================================
+
+        List<OrderItem> orderItems =
+                new ArrayList<>();
+
+
+        for (CartItem cartItem :
+                cart.getItems()) {
+
+
+            Product product =
+                    cartItem.getProduct();
+
+
+            int quantity =
+                    cartItem.getQuantity();
+
+
+            double price =
+                    product.getFinalPrice() != null
+                            ? product.getFinalPrice()
+                            : product.getPrice();
 
 
             OrderItem orderItem =
                     new OrderItem();
 
-            orderItem.setOrder(order);
 
-            orderItem.setProduct(product);
-
-            orderItem.setQuantity(quantity);
-
-            // Store price at time of purchase
-            orderItem.setPrice(price);
-
-            orderItems.add(orderItem);
+            orderItem.setOrder(
+                    order
+            );
 
 
-            // 7. Reduce stock
+            orderItem.setProduct(
+                    product
+            );
+
+
+            orderItem.setQuantity(
+                    quantity
+            );
+
+
+            /*
+             * Store purchase-time price.
+             */
+            orderItem.setPrice(
+                    price
+            );
+
+
+            orderItems.add(
+                    orderItem
+            );
+
+
+            // -------------------------------------------------
+            // REDUCE STOCK
+            // -------------------------------------------------
+
             product.setStock(
-                    product.getStock() - quantity
+                    product.getStock()
+                            - quantity
             );
         }
 
-
-        order.setTotalAmount(
-                totalAmount
-        );
 
         order.setItems(
                 orderItems
         );
 
 
-        // 8. Save order
+        // =====================================================
+        // 12. SAVE ORDER
+        // =====================================================
+
         Order savedOrder =
                 orderRepository.save(order);
 
 
-        // 9. Notify vendors
+        // =====================================================
+        // 13. SAVE COUPON USAGE
+        // =====================================================
+
+        if (appliedCoupon != null) {
+
+
+            // -------------------------------------------------
+            // INCREASE USAGE COUNT
+            // -------------------------------------------------
+
+            Integer currentUsedCount =
+                    appliedCoupon.getUsedCount();
+
+            if (currentUsedCount == null) {
+                currentUsedCount = 0;
+            }
+
+            appliedCoupon.setUsedCount(
+                    currentUsedCount + 1
+            );
+
+
+            couponRepository.save(
+                    appliedCoupon
+            );
+
+
+            // -------------------------------------------------
+            // CREATE USAGE RECORD
+            // -------------------------------------------------
+
+            CouponUsage couponUsage =
+                    new CouponUsage();
+
+
+            couponUsage.setCoupon(
+                    appliedCoupon
+            );
+
+
+            couponUsage.setCustomer(
+                    user
+            );
+
+
+            couponUsage.setOrder(
+                    savedOrder
+            );
+
+
+            couponUsage.setDiscountAmount(
+                    discountAmount
+            );
+
+
+            couponUsage.setUsedAt(
+                    LocalDateTime.now()
+            );
+
+
+            couponUsageRepository.save(
+                    couponUsage
+            );
+        }
+
+
+        // =====================================================
+        // 14. NOTIFY VENDORS
+        // =====================================================
+
         notificationService.notifyVendors(
                 savedOrder
         );
 
 
-        // 10. Clear cart
+        // =====================================================
+        // 15. CLEAR CART
+        // =====================================================
+
         cart.getItems().clear();
 
-        cartRepository.save(cart);
+        cartRepository.save(
+                cart
+        );
 
 
-        // 11. Return response
+        // =====================================================
+        // 16. RETURN RESPONSE
+        // =====================================================
+
         return convertToResponse(
                 savedOrder
+        );
+    }
+
+
+    // =========================================================
+    // PLACE ORDER WITHOUT REQUEST
+    // =========================================================
+
+    @Transactional
+    public OrderResponse placeOrder(
+            String email
+    ) {
+
+        return placeOrder(
+                email,
+                null
         );
     }
 
@@ -189,13 +635,16 @@ public class OrderService {
                 order.getId()
         );
 
+
         response.setTotalAmount(
                 order.getTotalAmount()
         );
 
+
         response.setStatus(
                 order.getStatus().name()
         );
+
 
         response.setOrderDate(
                 order.getOrderDate()
@@ -208,6 +657,7 @@ public class OrderService {
 
         for (OrderItem item :
                 order.getItems()) {
+
 
             OrderItemResponse itemResponse =
                     new OrderItemResponse();
@@ -292,7 +742,8 @@ public class OrderService {
                 new ArrayList<>();
 
 
-        for (Order order : orders) {
+        for (Order order :
+                orders) {
 
             responses.add(
                     convertToResponse(order)
@@ -314,7 +765,6 @@ public class OrderService {
             OrderStatus newStatus
     ) {
 
-        // 1. Find vendor
         User vendor =
                 userRepository.findByEmail(email)
                         .orElseThrow(() ->
@@ -324,7 +774,6 @@ public class OrderService {
                         );
 
 
-        // 2. Find order
         Order order =
                 orderRepository.findById(orderId)
                         .orElseThrow(() ->
@@ -334,8 +783,10 @@ public class OrderService {
                         );
 
 
-        // 3. Check whether vendor owns
-        // at least one product in this order
+        // -----------------------------------------------------
+        // CHECK VENDOR OWNERSHIP
+        // -----------------------------------------------------
+
         boolean vendorOwnsOrder =
                 order.getItems()
                         .stream()
@@ -365,12 +816,18 @@ public class OrderService {
         }
 
 
-        // 4. Get current status
+        // -----------------------------------------------------
+        // CURRENT STATUS
+        // -----------------------------------------------------
+
         OrderStatus currentStatus =
                 order.getStatus();
 
 
-        // 5. Delivered cannot be changed
+        // -----------------------------------------------------
+        // TERMINAL STATES
+        // -----------------------------------------------------
+
         if (currentStatus ==
                 OrderStatus.DELIVERED) {
 
@@ -380,7 +837,6 @@ public class OrderService {
         }
 
 
-        // 6. Cancelled cannot be changed
         if (currentStatus ==
                 OrderStatus.CANCELLED) {
 
@@ -390,7 +846,10 @@ public class OrderService {
         }
 
 
-        // 7. Validate transition
+        // -----------------------------------------------------
+        // VALIDATE TRANSITION
+        // -----------------------------------------------------
+
         if (!isValidTransition(
                 currentStatus,
                 newStatus
@@ -405,14 +864,18 @@ public class OrderService {
         }
 
 
-        // 8. Update status
+        // -----------------------------------------------------
+        // UPDATE
+        // -----------------------------------------------------
+
         order.setStatus(
                 newStatus
         );
 
 
-        // 9. Save
-        orderRepository.save(order);
+        orderRepository.save(
+                order
+        );
 
 
         return "Order status updated to "
@@ -435,23 +898,18 @@ public class OrderService {
                     next == OrderStatus.CONFIRMED
                             || next == OrderStatus.CANCELLED;
 
-
             case CONFIRMED ->
                     next == OrderStatus.PROCESSING
                             || next == OrderStatus.CANCELLED;
 
-
             case PROCESSING ->
                     next == OrderStatus.SHIPPED;
-
 
             case SHIPPED ->
                     next == OrderStatus.OUT_FOR_DELIVERY;
 
-
             case OUT_FOR_DELIVERY ->
                     next == OrderStatus.DELIVERED;
-
 
             case DELIVERED,
                  CANCELLED ->
@@ -468,7 +926,6 @@ public class OrderService {
             String email
     ) {
 
-        // 1. Find vendor
         User vendor =
                 userRepository.findByEmail(email)
                         .orElseThrow(() ->
@@ -478,7 +935,6 @@ public class OrderService {
                         );
 
 
-        // 2. Get all orders
         List<Order> allOrders =
                 orderRepository.findAll();
 
@@ -487,9 +943,9 @@ public class OrderService {
                 new ArrayList<>();
 
 
-        // 3. Keep only orders containing
-        // products belonging to this vendor
-        for (Order order : allOrders) {
+        for (Order order :
+                allOrders) {
+
 
             boolean vendorOwnsOrder =
                     order.getItems()
@@ -515,7 +971,9 @@ public class OrderService {
             if (vendorOwnsOrder) {
 
                 responses.add(
-                        convertToResponse(order)
+                        convertToResponse(
+                                order
+                        )
                 );
             }
         }

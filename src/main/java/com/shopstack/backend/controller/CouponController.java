@@ -1,4 +1,138 @@
 package com.shopstack.backend.controller;
 
+import com.shopstack.backend.dto.ApplyCouponRequest;
+import com.shopstack.backend.dto.CouponApplyResponse;
+import com.shopstack.backend.dto.CouponResponse;
+import com.shopstack.backend.dto.CreateCouponRequest;
+import com.shopstack.backend.service.CouponService;
+import org.springframework.security.core.Authentication;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/coupons")
+@CrossOrigin(origins = "http://localhost:5173")
 public class CouponController {
+
+    private final CouponService couponService;
+
+    public CouponController(CouponService couponService) {
+        this.couponService = couponService;
+    }
+
+
+    // =========================================================
+    // ADMIN - CREATE COUPON
+    // =========================================================
+
+    @PostMapping
+    public ResponseEntity<CouponResponse> createCoupon(
+            @RequestBody CreateCouponRequest request
+    ) {
+
+        CouponResponse response =
+                couponService.createCoupon(request);
+
+        return ResponseEntity.ok(response);
+    }
+
+
+    // =========================================================
+    // ADMIN - GET ALL COUPONS
+    // =========================================================
+
+    @GetMapping
+    public ResponseEntity<List<CouponResponse>> getAllCoupons() {
+
+        System.out.println("🔥 GET ALL COUPONS CONTROLLER CALLED");
+
+        return ResponseEntity.ok(
+                couponService.getAllCoupons()
+        );
+    }
+
+
+    // =========================================================
+    // ADMIN - GET COUPON BY ID
+    // =========================================================
+
+    @GetMapping("/{id}")
+    public ResponseEntity<CouponResponse> getCouponById(
+            @PathVariable Long id
+    ) {
+
+        return ResponseEntity.ok(
+                couponService.getCouponById(id)
+        );
+    }
+
+
+    // =========================================================
+    // CUSTOMER - APPLY COUPON
+    // =========================================================
+
+    @PostMapping("/apply")
+    public ResponseEntity<CouponApplyResponse> applyCoupon(
+            @RequestBody ApplyCouponRequest request
+    ) {
+
+        CouponApplyResponse response =
+                couponService.applyCoupon(request);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/vendor")
+    public ResponseEntity<List<CouponResponse>> getVendorCoupons(
+            Authentication authentication
+    ) {
+
+        return ResponseEntity.ok(
+                couponService.getVendorCoupons(
+                        authentication.getName()
+                )
+        );
+    }
+
+    @PutMapping("/{id}/approve")
+    public ResponseEntity<CouponResponse> approveCoupon(
+            @PathVariable Long id,
+            Authentication authentication
+    ) {
+
+        return ResponseEntity.ok(
+                couponService.approveCoupon(
+                        id,
+                        authentication.getName()
+                )
+        );
+    }
+
+    @PutMapping("/{id}/reject")
+    public ResponseEntity<CouponResponse> rejectCoupon(
+            @PathVariable Long id,
+            Authentication authentication
+    ) {
+
+        return ResponseEntity.ok(
+                couponService.rejectCoupon(
+                        id,
+                        authentication.getName()
+                )
+        );
+    }
+
+    @GetMapping("/available")
+    public ResponseEntity<List<CouponResponse>> getAvailableCoupons(
+            Authentication authentication
+    ) {
+
+        return ResponseEntity.ok(
+                couponService.getAvailableCoupons(
+                        authentication.getName()
+                )
+        );
+    }
 }

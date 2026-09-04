@@ -3,6 +3,7 @@ package com.shopstack.backend.dto;
 public class ProductResponse {
 
     private Long id;
+    private Long vendorId;
     private String name;
     private String description;
     private Double price;
@@ -105,5 +106,13 @@ public class ProductResponse {
 
     public void setVendorName(String vendorName) {
         this.vendorName = vendorName;
+    }
+
+    public Long getVendorId() {
+        return vendorId;
+    }
+
+    public void setVendorId(Long vendorId) {
+        this.vendorId = vendorId;
     }
 }

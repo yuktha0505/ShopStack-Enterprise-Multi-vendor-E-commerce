@@ -7,8 +7,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -22,42 +22,75 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private JwtService jwtService;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain)
-            throws ServletException, IOException {
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain
+    ) throws ServletException, IOException {
 
+        System.out.println("========== JWT FILTER ==========");
         System.out.println("Request URI: " + request.getRequestURI());
 
         String authHeader = request.getHeader("Authorization");
 
         System.out.println("Authorization Header: " + authHeader);
 
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+        if (authHeader != null &&
+                authHeader.startsWith("Bearer ")) {
 
             String token = authHeader.substring(7);
 
             try {
 
                 String email = jwtService.extractEmail(token);
+                String role = jwtService.extractRole(token);
 
-                System.out.println("Email from Token: " + email);
+                System.out.println("Email: " + email);
+                System.out.println("Role: " + role);
 
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(
                                 email,
                                 null,
-                                List.of(new SimpleGrantedAuthority("ROLE_USER"))
+                                List.of(
+                                        new SimpleGrantedAuthority(
+                                                "ROLE_" + role
+                                        )
+                                )
                         );
 
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                SecurityContextHolder
+                        .getContext()
+                        .setAuthentication(authentication);
 
-                System.out.println("Authentication Set Successfully");
+                System.out.println(
+                        "AUTHENTICATED: " +
+                                SecurityContextHolder
+                                        .getContext()
+                                        .getAuthentication()
+                );
+
+                System.out.println(
+                        "AUTHORITIES: " +
+                                SecurityContextHolder
+                                        .getContext()
+                                        .getAuthentication()
+                                        .getAuthorities()
+                );
+
+                System.out.println(
+                        "IS AUTHENTICATED: " +
+                                SecurityContextHolder
+                                        .getContext()
+                                        .getAuthentication()
+                                        .isAuthenticated()
+                );
 
             } catch (Exception e) {
 
-                e.printStackTrace();
-
+                System.out.println(
+                        "JWT ERROR: " + e.getMessage()
+                );
             }
         }
 

@@ -1,5 +1,6 @@
 package com.shopstack.backend.service;
 
+import com.shopstack.backend.entity.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -13,13 +14,22 @@ public class JwtService {
     private final String SECRET_KEY =
             "ThisIsMyVerySecretKeyForShopStackProject123456";
 
-    public String generateToken(String email) {
+    public String generateToken(User user) {
 
         return Jwts.builder()
-                .subject(email)
+                .subject(user.getEmail())
+                .claim("role", user.getRole().name())
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + 86400000))
-                .signWith(SignatureAlgorithm.HS256, SECRET_KEY.getBytes())
+                .expiration(
+                        new Date(
+                                System.currentTimeMillis()
+                                        + 86400000
+                        )
+                )
+                .signWith(
+                        SignatureAlgorithm.HS256,
+                        SECRET_KEY.getBytes()
+                )
                 .compact();
     }
 
@@ -32,5 +42,16 @@ public class JwtService {
                 .getPayload();
 
         return claims.getSubject();
+    }
+
+    public String extractRole(String token) {
+
+        Claims claims = Jwts.parser()
+                .setSigningKey(SECRET_KEY.getBytes())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+
+        return claims.get("role", String.class);
     }
 }

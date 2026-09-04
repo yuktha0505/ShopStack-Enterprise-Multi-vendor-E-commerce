@@ -1,4 +1,9 @@
 package com.shopstack.backend.entity;
 
-public class CommissionStatus {
+public enum CommissionStatus {
+
+    PENDING,
+    CALCULATED,
+    PAID,
+    CANCELLED
 }

@@ -1,5 +1,6 @@
 package com.shopstack.backend.controller;
 
+import com.shopstack.backend.dto.OrderRequest;
 import com.shopstack.backend.dto.OrderResponse;
 import com.shopstack.backend.entity.OrderStatus;
 import com.shopstack.backend.service.JwtService;
@@ -22,29 +23,62 @@ public class OrderController {
     private JwtService jwtService;
 
 
+    // =========================================================
+    // PLACE ORDER
+    // =========================================================
+
     @PostMapping
     public OrderResponse placeOrder(
-            @RequestHeader("Authorization") String authHeader) {
+            @RequestHeader("Authorization") String authHeader,
+            @RequestBody OrderRequest request
+    ) {
 
         String token = authHeader.substring(7);
 
-        String email = jwtService.extractEmail(token);
+        String email =
+                jwtService.extractEmail(token);
 
-        return orderService.placeOrder(email);
+        return orderService.placeOrder(
+                email,
+                request
+        );
     }
 
+
+    // =========================================================
+    // GET CUSTOMER ORDERS
+    // =========================================================
 
     @GetMapping
-    public List<OrderResponse> getMyOrders(
-            @RequestHeader("Authorization") String authHeader) {
+    public ResponseEntity<?> getMyOrders(
+            @RequestHeader("Authorization") String authHeader
+    ) {
 
-        String token = authHeader.substring(7);
+        try {
 
-        String email = jwtService.extractEmail(token);
+            String token =
+                    authHeader.substring(7);
 
-        return orderService.getMyOrders(email);
+            String email =
+                    jwtService.extractEmail(token);
+
+            List<OrderResponse> orders =
+                    orderService.getMyOrders(email);
+
+            return ResponseEntity.ok(orders);
+
+        } catch (RuntimeException e) {
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(e.getMessage());
+        }
     }
 
+
+    // =========================================================
+    // UPDATE ORDER STATUS
+    // =========================================================
 
     @PutMapping("/{id}/status")
     public ResponseEntity<?> updateOrderStatus(
@@ -55,9 +89,11 @@ public class OrderController {
 
         try {
 
-            String token = authHeader.substring(7);
+            String token =
+                    authHeader.substring(7);
 
-            String email = jwtService.extractEmail(token);
+            String email =
+                    jwtService.extractEmail(token);
 
             String response =
                     orderService.updateOrderStatus(
@@ -76,15 +112,23 @@ public class OrderController {
         }
     }
 
+
+    // =========================================================
+    // GET VENDOR ORDERS
+    // =========================================================
+
     @GetMapping("/vendor")
     public ResponseEntity<?> getVendorOrders(
-            @RequestHeader("Authorization") String authHeader) {
+            @RequestHeader("Authorization") String authHeader
+    ) {
 
         try {
 
-            String token = authHeader.substring(7);
+            String token =
+                    authHeader.substring(7);
 
-            String email = jwtService.extractEmail(token);
+            String email =
+                    jwtService.extractEmail(token);
 
             List<OrderResponse> orders =
                     orderService.getVendorOrders(email);
@@ -98,4 +142,6 @@ public class OrderController {
                     .body(e.getMessage());
         }
     }
+
+
 }

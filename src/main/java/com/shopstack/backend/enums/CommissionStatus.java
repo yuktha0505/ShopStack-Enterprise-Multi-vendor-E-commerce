@@ -1,4 +1,9 @@
 package com.shopstack.backend.enums;
 
-public class CommissionStatus {
+public enum CommissionStatus {
+
+
+    CALCULATED,
+    PAID,
+    CANCELLED
 }

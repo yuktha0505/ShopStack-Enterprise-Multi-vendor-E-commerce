@@ -21,10 +21,16 @@ public class ProductService {
     @Autowired
     private UserRepository userRepository;
 
+
+    // =========================================================
+    // ADD PRODUCT
+    // =========================================================
+
     public String addProduct(String email, ProductRequest request) {
 
         User vendor = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Vendor not found"));
+                .orElseThrow(() ->
+                        new RuntimeException("Vendor not found"));
 
         Product product = new Product();
 
@@ -39,25 +45,33 @@ public class ProductService {
         }
 
         if (discount < 0 || discount > 100) {
-            throw new RuntimeException("Discount must be between 0 and 100");
+            throw new RuntimeException(
+                    "Discount must be between 0 and 100");
         }
 
         product.setDiscount(discount);
 
         Double finalPrice =
-                request.getPrice() -
-                        (request.getPrice() * discount / 100);
+                request.getPrice()
+                        - (request.getPrice() * discount / 100);
 
         product.setFinalPrice(finalPrice);
         product.setStock(request.getStock());
         product.setCategory(request.getCategory());
         product.setImageUrl(request.getImageUrl());
+
+        // Assign vendor
         product.setVendor(vendor);
 
         productRepository.save(product);
 
         return "Product Added Successfully";
     }
+
+
+    // =========================================================
+    // GET ALL PRODUCTS
+    // =========================================================
 
     public List<ProductResponse> getAllProducts() {
 
@@ -68,11 +82,18 @@ public class ProductService {
         for (Product product : products) {
 
             ProductResponse response = new ProductResponse();
-
+            System.out.println("PRODUCT ID = " + product.getId());
+            System.out.println("PRODUCT NAME = " + product.getName());
+            System.out.println("VENDOR OBJECT = " + product.getVendor());
+            if (product.getVendor() != null) {
+                System.out.println("VENDOR ID = " + product.getVendor().getId());
+                System.out.println("VENDOR NAME = " + product.getVendor().getName());
+            }
             response.setId(product.getId());
             response.setName(product.getName());
             response.setDescription(product.getDescription());
             response.setPrice(product.getPrice());
+
             Double discount = product.getDiscount();
 
             if (discount == null) {
@@ -90,7 +111,12 @@ public class ProductService {
             response.setStock(product.getStock());
             response.setCategory(product.getCategory());
             response.setImageUrl(product.getImageUrl());
-            response.setVendorName(product.getVendor().getName());
+
+            // VENDOR
+            if (product.getVendor() != null) {
+                response.setVendorId(product.getVendor().getId());
+                response.setVendorName(product.getVendor().getName());
+            }
 
             responseList.add(response);
         }
@@ -98,18 +124,30 @@ public class ProductService {
         return responseList;
     }
 
-    public List<ProductResponse> getMyProducts(String email) {
 
-        User vendor = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Vendor not found"));
+    // =========================================================
+    // GET MY PRODUCTS
+    // =========================================================
 
-        List<Product> products = productRepository.findByVendor(vendor);
+    public List<ProductResponse> getMyProducts(
+            String email) {
 
-        List<ProductResponse> responseList = new ArrayList<>();
+        User vendor =
+                userRepository.findByEmail(email)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Vendor not found"));
+
+        List<Product> products =
+                productRepository.findByVendor(vendor);
+
+        List<ProductResponse> responseList =
+                new ArrayList<>();
 
         for (Product product : products) {
 
-            ProductResponse response = new ProductResponse();
+            ProductResponse response =
+                    new ProductResponse();
 
             response.setId(product.getId());
             response.setName(product.getName());
@@ -120,7 +158,17 @@ public class ProductService {
             response.setStock(product.getStock());
             response.setCategory(product.getCategory());
             response.setImageUrl(product.getImageUrl());
-            response.setVendorName(product.getVendor().getName());
+
+            if (product.getVendor() != null) {
+
+                response.setVendorId(
+                        product.getVendor().getId()
+                );
+
+                response.setVendorName(
+                        product.getVendor().getName()
+                );
+            }
 
             responseList.add(response);
         }
@@ -128,33 +176,50 @@ public class ProductService {
         return responseList;
     }
 
-    public String updateProduct(Long id, String email, ProductRequest request) {
 
-        User vendor = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Vendor not found"));
+    // =========================================================
+    // UPDATE PRODUCT
+    // =========================================================
 
-        Product product = productRepository.findByIdAndVendor(id, vendor)
-                .orElseThrow(() -> new RuntimeException("Product not found or access denied"));
+    public String updateProduct(
+            Long id,
+            String email,
+            ProductRequest request) {
+
+        User vendor =
+                userRepository.findByEmail(email)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Vendor not found"));
+
+        Product product =
+                productRepository
+                        .findByIdAndVendor(id, vendor)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Product not found or access denied"));
 
         product.setName(request.getName());
         product.setDescription(request.getDescription());
         product.setPrice(request.getPrice());
 
-        Double discount = request.getDiscount();
+        Double discount =
+                request.getDiscount();
 
         if (discount == null) {
             discount = 0.0;
         }
 
         if (discount < 0 || discount > 100) {
-            throw new RuntimeException("Discount must be between 0 and 100");
+            throw new RuntimeException(
+                    "Discount must be between 0 and 100");
         }
 
         product.setDiscount(discount);
 
         Double finalPrice =
-                request.getPrice() -
-                        (request.getPrice() * discount / 100);
+                request.getPrice()
+                        - (request.getPrice() * discount / 100);
 
         product.setFinalPrice(finalPrice);
         product.setStock(request.getStock());
@@ -166,25 +231,49 @@ public class ProductService {
         return "Product Updated Successfully";
     }
 
-    public String deleteProduct(Long id, String email) {
 
-        User vendor = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Vendor not found"));
+    // =========================================================
+    // DELETE PRODUCT
+    // =========================================================
 
-        Product product = productRepository.findByIdAndVendor(id, vendor)
-                .orElseThrow(() -> new RuntimeException("Product not found or access denied"));
+    public String deleteProduct(
+            Long id,
+            String email) {
+
+        User vendor =
+                userRepository.findByEmail(email)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Vendor not found"));
+
+        Product product =
+                productRepository
+                        .findByIdAndVendor(id, vendor)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Product not found or access denied"));
 
         productRepository.delete(product);
 
         return "Product Deleted Successfully";
     }
 
-    public ProductResponse getProductById(Long id) {
 
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+    // =========================================================
+    // GET PRODUCT BY ID
+    // =========================================================
 
-        ProductResponse response = new ProductResponse();
+    public ProductResponse getProductById(
+            Long id) {
+
+        Product product =
+                productRepository.findById(id)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Product not found"));
+
+        ProductResponse response =
+                new ProductResponse();
 
         response.setId(product.getId());
         response.setName(product.getName());
@@ -195,7 +284,17 @@ public class ProductService {
         response.setStock(product.getStock());
         response.setCategory(product.getCategory());
         response.setImageUrl(product.getImageUrl());
-        response.setVendorName(product.getVendor().getName());
+
+        if (product.getVendor() != null) {
+
+            response.setVendorId(
+                    product.getVendor().getId()
+            );
+
+            response.setVendorName(
+                    product.getVendor().getName()
+            );
+        }
 
         return response;
     }
