@@ -232,6 +232,53 @@ public class CommissionService {
 
 
     /*
+     * Mark a commission as paid to the vendor.
+     */
+    public CommissionResponse markAsPaid(Long commissionId) {
+
+        Commission commission =
+                commissionRepository.findById(commissionId)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Commission not found"
+                                )
+                        );
+
+
+        if (commission.getStatus()
+                == CommissionStatus.PAID) {
+
+            throw new RuntimeException(
+                    "Commission is already marked as paid"
+            );
+        }
+
+
+        if (commission.getStatus()
+                == CommissionStatus.CANCELLED) {
+
+            throw new RuntimeException(
+                    "Cancelled commission cannot be marked as paid"
+            );
+        }
+
+
+        commission.setStatus(
+                CommissionStatus.PAID
+        );
+
+
+        Commission saved =
+                commissionRepository.save(
+                        commission
+                );
+
+
+        return convertToResponse(saved);
+    }
+
+
+    /*
      * Convert Commission entity to DTO.
      */
     private CommissionResponse convertToResponse(

@@ -1,38 +1,81 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
+// ==============================
+// AUTH / COMMON PAGES
+// ==============================
+
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Home from "./pages/Home";
 import Profile from "./pages/Profile";
-import ProtectedRoute from "./components/ProtectedRoute";
 import Products from "./pages/Products";
+import ProductDetails from "./pages/ProductDetails";
+import Cart from "./pages/Cart";
+import MyOrders from "./pages/MyOrders";
+import Checkout from "./pages/Checkout";
+import OrderSuccess from "./pages/OrderSuccess";
+import Notifications from "./pages/Notifications";
+
+
+// ==============================
+// VENDOR PAGES
+// ==============================
+
 import VendorDashboard from "./pages/VendorDashboard";
 import AddProduct from "./pages/AddProduct";
 import MyProducts from "./pages/MyProducts";
 import EditProduct from "./pages/EditProduct";
-import ProductDetails from "./pages/ProductDetails";
 import Inventory from "./pages/Inventory";
-import Cart from "./pages/Cart";
-import MyOrders from "./pages/MyOrders";
-import Checkout from "./pages/Checkout";
 import VendorOrders from "./pages/VendorOrders";
-import OrderSuccess from "./pages/OrderSuccess";
-import Notifications from "./pages/Notifications";
+import VendorCoupons from "./pages/VendorCoupons";
+
+
+// ==============================
+// ADMIN PAGES
+// ==============================
+
 import AdminDashboard from "./pages/AdminDashboard";
-import VendorManagement from "./pages/VendorManagement";
-import AdminOrders from "./pages/AdminOrders";
 import AdminVendors from "./pages/AdminVendors";
+import AdminOrders from "./pages/AdminOrders";
 import AdminAnalytics from "./pages/AdminAnalytics";
 import AdminCommissions from "./pages/AdminCommissions";
 import AdminCoupons from "./pages/AdminCoupons";
+import AdminReturns from "./pages/AdminReturns";
+
+
+// ==============================
+// PROTECTED ROUTE
+// ==============================
+
+import ProtectedRoute from "./components/ProtectedRoute";
+
 
 function App() {
+
     return (
+
         <BrowserRouter>
+
             <Routes>
 
-                <Route path="/" element={<Login />} />
-                <Route path="/register" element={<Register />} />
+                {/* ==========================================
+                    AUTHENTICATION
+                ========================================== */}
+
+                <Route
+                    path="/"
+                    element={<Login />}
+                />
+
+                <Route
+                    path="/register"
+                    element={<Register />}
+                />
+
+
+                {/* ==========================================
+                    CUSTOMER / COMMON
+                ========================================== */}
 
                 <Route
                     path="/home"
@@ -51,6 +94,7 @@ function App() {
                         </ProtectedRoute>
                     }
                 />
+
                 <Route
                     path="/products"
                     element={
@@ -59,6 +103,81 @@ function App() {
                         </ProtectedRoute>
                     }
                 />
+
+                <Route
+                    path="/product/:id"
+                    element={
+                        <ProtectedRoute>
+                            <ProductDetails />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/cart"
+                    element={
+                        <ProtectedRoute>
+                            <Cart />
+                        </ProtectedRoute>
+                    }
+                />
+
+
+                {/* ==========================================
+                    MY ORDERS
+                    CUSTOMER ORDER HISTORY
+                ========================================== */}
+
+                <Route
+                    path="/my-orders"
+                    element={
+                        <ProtectedRoute>
+                            <MyOrders />
+                        </ProtectedRoute>
+                    }
+                />
+
+
+                {/* ==========================================
+                    CHECKOUT
+                ========================================== */}
+
+                <Route
+                    path="/checkout"
+                    element={
+                        <ProtectedRoute>
+                            <Checkout />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/order-success"
+                    element={
+                        <ProtectedRoute>
+                            <OrderSuccess />
+                        </ProtectedRoute>
+                    }
+                />
+
+
+                {/* ==========================================
+                    NOTIFICATIONS
+                ========================================== */}
+
+                <Route
+                    path="/notifications"
+                    element={
+                        <ProtectedRoute>
+                            <Notifications />
+                        </ProtectedRoute>
+                    }
+                />
+
+
+                {/* ==========================================
+                    VENDOR
+                ========================================== */}
 
                 <Route
                     path="/vendor/dashboard"
@@ -77,6 +196,7 @@ function App() {
                         </ProtectedRoute>
                     }
                 />
+
                 <Route
                     path="/vendor/my-products"
                     element={
@@ -96,10 +216,19 @@ function App() {
                 />
 
                 <Route
-                    path="/product/:id"
+                    path="/vendor/coupons"
                     element={
                         <ProtectedRoute>
-                            <ProductDetails />
+                            <VendorCoupons />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/vendor/orders"
+                    element={
+                        <ProtectedRoute>
+                            <VendorOrders />
                         </ProtectedRoute>
                     }
                 />
@@ -112,68 +241,134 @@ function App() {
                         </ProtectedRoute>
                     }
                 />
-                <Route path="/add-product" element={<ProtectedRoute><AddProduct /></ProtectedRoute>} />
 
-                <Route path="/my-products" element={<ProtectedRoute><MyProducts /></ProtectedRoute>} />
 
-                <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
+                {/* ==========================================
+                    LEGACY VENDOR ROUTES
+                    Kept so existing links don't break
+                ========================================== */}
 
                 <Route
-                    path="/my-orders"
-                    element={<MyOrders />}
-                />
-
-                <Route path="/checkout" element={<Checkout />} />
-                <Route
-                    path="/vendor/orders"
-                    element={<VendorOrders />}
-                />
-                <Route
-                    path="/vendor/orders"
-                    element={<VendorOrders />}
+                    path="/add-product"
+                    element={
+                        <ProtectedRoute>
+                            <AddProduct />
+                        </ProtectedRoute>
+                    }
                 />
 
                 <Route
-                    path="/notifications"
-                    element={<Notifications />}
+                    path="/my-products"
+                    element={
+                        <ProtectedRoute>
+                            <MyProducts />
+                        </ProtectedRoute>
+                    }
                 />
 
-                <Route
-                    path="/order-success"
-                    element={<OrderSuccess />}
-                />
+
+                {/* ==========================================
+                    ADMIN DASHBOARD
+                ========================================== */}
+
                 <Route
                     path="/admin/dashboard"
-                    element={<AdminDashboard />}
+                    element={
+                        <ProtectedRoute>
+                            <AdminDashboard />
+                        </ProtectedRoute>
+                    }
                 />
+
+
+                {/* ==========================================
+                    ADMIN VENDOR MANAGEMENT
+                ========================================== */}
+
                 <Route
                     path="/admin/vendors"
-                    element={<VendorManagement />}
+                    element={
+                        <ProtectedRoute>
+                            <AdminVendors />
+                        </ProtectedRoute>
+                    }
                 />
+
+
+                {/* ==========================================
+                    ADMIN ORDER MANAGEMENT
+                ========================================== */}
 
                 <Route
                     path="/admin/orders"
-                    element={<AdminOrders />}
+                    element={
+                        <ProtectedRoute>
+                            <AdminOrders />
+                        </ProtectedRoute>
+                    }
                 />
 
-                <Route
-                    path="/admin/vendors"
-                    element={<AdminVendors />}
-                />
+
+                {/* ==========================================
+                    ADMIN ANALYTICS
+                ========================================== */}
 
                 <Route
                     path="/admin/analytics"
-                    element={<AdminAnalytics />}
+                    element={
+                        <ProtectedRoute>
+                            <AdminAnalytics />
+                        </ProtectedRoute>
+                    }
                 />
+
+
+                {/* ==========================================
+                    ADMIN COMMISSIONS
+                ========================================== */}
+
                 <Route
                     path="/admin/commissions"
-                    element={<AdminCommissions />}
+                    element={
+                        <ProtectedRoute>
+                            <AdminCommissions />
+                        </ProtectedRoute>
+                    }
                 />
+
+
+                {/* ==========================================
+                    ADMIN COUPONS
+                ========================================== */}
+
                 <Route
                     path="/admin/coupons"
-                    element={<AdminCoupons />}
+                    element={
+                        <ProtectedRoute>
+                            <AdminCoupons />
+                        </ProtectedRoute>
+                    }
                 />
+
+
+                {/* ==========================================
+                    ADMIN RETURN & REFUND MANAGEMENT
+                ========================================== */}
+
+                <Route
+                    path="/admin/returns"
+                    element={
+                        <ProtectedRoute>
+                            <AdminReturns />
+                        </ProtectedRoute>
+                    }
+                />
+
+
+
+
             </Routes>
+
         </BrowserRouter>
     );
 }

@@ -15,6 +15,7 @@ import com.shopstack.backend.repository.CouponRepository;
 import com.shopstack.backend.repository.ProductRepository;
 import com.shopstack.backend.repository.UserRepository;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -22,6 +23,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import com.shopstack.backend.entity.Cart;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
 
 
 @Service
@@ -384,7 +387,8 @@ public class CouponService {
     // =========================================================
 
     public CouponApplyResponse applyCoupon(
-            ApplyCouponRequest request
+            ApplyCouponRequest request,
+            String email
     ) {
 
         // -----------------------------------------------------
@@ -440,6 +444,77 @@ public class CouponService {
 
             throw new RuntimeException(
                     "Coupon has not been approved by the vendor"
+            );
+        }
+
+
+        // -----------------------------------------------------
+        // CHECK PRODUCT ELIGIBILITY
+        // -----------------------------------------------------
+        // Mirrors the check OrderService performs at order
+        // placement, so a coupon that "applies" here never
+        // fails later at checkout for a different reason.
+
+        if (coupon.getEligibleProducts() == null ||
+                coupon.getEligibleProducts().isEmpty()) {
+
+            throw new RuntimeException(
+                    "This coupon is not valid for any products"
+            );
+        }
+
+
+        User customer =
+                userRepository.findByEmail(email)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "User not found"
+                                )
+                        );
+
+
+        Cart cart =
+                cartRepository.findByUser(customer)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Cart not found"
+                                )
+                        );
+
+
+        if (cart.getItems() == null ||
+                cart.getItems().isEmpty()) {
+
+            throw new RuntimeException(
+                    "Your cart is empty"
+            );
+        }
+
+
+        boolean eligibleProductFound =
+                cart.getItems()
+                        .stream()
+                        .anyMatch(cartItem ->
+
+                                coupon.getEligibleProducts()
+                                        .stream()
+                                        .anyMatch(couponProduct ->
+
+                                                couponProduct
+                                                        .getId()
+                                                        .equals(
+                                                                cartItem
+                                                                        .getProduct()
+                                                                        .getId()
+                                                        )
+                                        )
+                        );
+
+
+        if (!eligibleProductFound) {
+
+            throw new RuntimeException(
+                    "This coupon is not applicable to the products in your cart"
             );
         }
 
@@ -1011,4 +1086,31 @@ public class CouponService {
 
         return responses;
     }
+
+    // =========================================================
+// ADMIN - ACTIVATE / DEACTIVATE COUPON
+// =========================================================
+
+    public CouponResponse toggleCoupon(Long couponId) {
+
+        Coupon coupon =
+                couponRepository.findById(couponId)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Coupon not found"
+                                )
+                        );
+
+        // Toggle active status
+        coupon.setActive(
+                !Boolean.TRUE.equals(coupon.getActive())
+        );
+
+        Coupon savedCoupon =
+                couponRepository.save(coupon);
+
+        return convertToResponse(savedCoupon);
+    }
+
+
 }

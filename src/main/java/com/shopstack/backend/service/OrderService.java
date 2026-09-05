@@ -868,14 +868,13 @@ public class OrderService {
         // UPDATE
         // -----------------------------------------------------
 
-        order.setStatus(
-                newStatus
-        );
+        order.setStatus(newStatus);
 
+        if (newStatus == OrderStatus.DELIVERED) {
+            order.setDeliveredAt(LocalDateTime.now());
+        }
 
-        orderRepository.save(
-                order
-        );
+        orderRepository.save(order);
 
 
         return "Order status updated to "
@@ -912,7 +911,9 @@ public class OrderService {
                     next == OrderStatus.DELIVERED;
 
             case DELIVERED,
-                 CANCELLED ->
+                 CANCELLED,
+                 RETURNED,
+                 REFUNDED ->
                     false;
         };
     }

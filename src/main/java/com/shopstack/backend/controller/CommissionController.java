@@ -68,4 +68,30 @@ public class CommissionController {
                         .getVendorCommissions(vendorId)
         );
     }
+
+
+    /*
+     * Mark a commission as paid out to the vendor.
+     */
+    @PatchMapping("/{commissionId}/pay")
+    public ResponseEntity<?> markAsPaid(
+            @PathVariable Long commissionId
+    ) {
+
+        try {
+
+            CommissionResponse response =
+                    commissionService.markAsPaid(
+                            commissionId
+                    );
+
+            return ResponseEntity.ok(response);
+
+        } catch (RuntimeException e) {
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(e.getMessage());
+        }
+    }
 }

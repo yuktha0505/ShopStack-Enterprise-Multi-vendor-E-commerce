@@ -5,8 +5,10 @@ function AdminCoupons() {
 
     const [coupons, setCoupons] = useState([]);
     const [products, setProducts] = useState([]);
+    const [analytics, setAnalytics] = useState([]);
 
     const [loading, setLoading] = useState(true);
+    const [analyticsLoading, setAnalyticsLoading] = useState(true);
     const [creating, setCreating] = useState(false);
 
     const [selectedVendor, setSelectedVendor] = useState("");
@@ -85,8 +87,62 @@ function AdminCoupons() {
     useEffect(() => {
 
         fetchData();
+        fetchAnalytics();
 
     }, []);
+
+
+    // =========================================================
+    // FETCH COUPON ANALYTICS
+    // =========================================================
+
+    const fetchAnalytics = async () => {
+
+        try {
+
+            const token = localStorage.getItem("token");
+
+            const response = await axios.get(
+                "http://localhost:8080/api/admin/coupons/analytics",
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+
+            setAnalytics(response.data);
+
+        } catch (error) {
+
+            console.error(
+                "Error loading coupon analytics:",
+                error
+            );
+
+        } finally {
+
+            setAnalyticsLoading(false);
+
+        }
+    };
+
+
+    // =========================================================
+    // ANALYTICS TOTALS (across all coupons)
+    // =========================================================
+
+    const totalUsageCount = analytics.reduce(
+        (total, item) =>
+            total + Number(item.usedCount || 0),
+        0
+    );
+
+    const totalDiscountGiven = analytics.reduce(
+        (total, item) =>
+            total + Number(item.totalDiscount || 0),
+        0
+    );
 
 
     // =========================================================
@@ -407,6 +463,45 @@ function AdminCoupons() {
 
         }
 
+    };
+
+
+// =========================================================
+// ACTIVATE / DEACTIVATE COUPON
+// =========================================================
+
+    const handleToggleCoupon = async (couponId) => {
+
+        try {
+
+            const token = localStorage.getItem("token");
+
+            await axios.put(
+                `http://localhost:8080/api/coupons/${couponId}/toggle`,
+                {},
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+
+            alert("Coupon status updated successfully");
+
+            await fetchData();
+
+        } catch (error) {
+
+            console.error(
+                "Error toggling coupon:",
+                error
+            );
+
+            alert(
+                error.response?.data ||
+                "Failed to update coupon status"
+            );
+        }
     };
 
 
@@ -1030,6 +1125,171 @@ function AdminCoupons() {
 
 
                 {/* =================================================
+                    COUPON ANALYTICS
+                ================================================= */}
+
+                <div className="mb-10">
+
+                    <h2 className="text-3xl font-bold mb-1">
+
+                        Coupon Analytics
+
+                    </h2>
+
+                    <p className="text-gray-500 mb-6">
+
+                        Usage and discount performance across all coupons
+
+                    </p>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+
+                        <div className="bg-white rounded-xl shadow p-6">
+
+                            <p className="text-sm text-gray-500">
+
+                                Total Times Used
+
+                            </p>
+
+                            <p className="text-3xl font-bold mt-1">
+
+                                {totalUsageCount}
+
+                            </p>
+
+                        </div>
+
+                        <div className="bg-white rounded-xl shadow p-6">
+
+                            <p className="text-sm text-gray-500">
+
+                                Total Discount Given
+
+                            </p>
+
+                            <p className="text-3xl font-bold mt-1">
+
+                                ₹{totalDiscountGiven.toFixed(2)}
+
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                    {analyticsLoading ? (
+
+                        <div className="bg-white rounded-xl shadow p-6 text-center text-gray-500">
+
+                            Loading analytics...
+
+                        </div>
+
+                    ) : analytics.length === 0 ? (
+
+                        <div className="bg-white rounded-xl shadow p-6 text-center text-gray-500">
+
+                            No coupon usage yet.
+
+                        </div>
+
+                    ) : (
+
+                        <div className="bg-white rounded-xl shadow overflow-x-auto">
+
+                            <table className="w-full text-left">
+
+                                <thead>
+
+                                <tr className="border-b bg-gray-50">
+
+                                    <th className="px-6 py-3 text-sm font-semibold text-gray-500">
+                                        Coupon Code
+                                    </th>
+
+                                    <th className="px-6 py-3 text-sm font-semibold text-gray-500">
+                                        Used
+                                    </th>
+
+                                    <th className="px-6 py-3 text-sm font-semibold text-gray-500">
+                                        Remaining
+                                    </th>
+
+                                    <th className="px-6 py-3 text-sm font-semibold text-gray-500">
+                                        Total Discount
+                                    </th>
+
+                                    <th className="px-6 py-3 text-sm font-semibold text-gray-500">
+                                        Status
+                                    </th>
+
+                                </tr>
+
+                                </thead>
+
+                                <tbody>
+
+                                {analytics.map(item => (
+
+                                    <tr
+                                        key={item.couponId}
+                                        className="border-b last:border-b-0"
+                                    >
+
+                                        <td className="px-6 py-3 font-semibold text-blue-600">
+                                            {item.couponCode}
+                                        </td>
+
+                                        <td className="px-6 py-3">
+                                            {item.usedCount} / {
+                                            item.usageLimit != null
+                                                ? item.usageLimit
+                                                : "∞"
+                                        }
+                                        </td>
+
+                                        <td className="px-6 py-3">
+                                            {item.remainingUses != null
+                                                ? item.remainingUses
+                                                : "∞"
+                                            }
+                                        </td>
+
+                                        <td className="px-6 py-3">
+                                            ₹{Number(item.totalDiscount || 0).toFixed(2)}
+                                        </td>
+
+                                        <td className="px-6 py-3">
+
+                                                <span
+                                                    className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                                                        item.active
+                                                            ? "bg-green-100 text-green-700"
+                                                            : "bg-red-100 text-red-700"
+                                                    }`}
+                                                >
+                                                    {item.active ? "ACTIVE" : "INACTIVE"}
+                                                </span>
+
+                                        </td>
+
+                                    </tr>
+
+                                ))}
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                    )}
+
+                </div>
+
+
+                {/* =================================================
                     COUPON LIST
                 ================================================= */}
 
@@ -1279,6 +1539,48 @@ function AdminCoupons() {
                                             }
 
                                             </span>
+
+                                            {/* =================================================
+    ACTIONS
+================================================= */}
+
+                                            <div className="mt-6 pt-5 border-t">
+
+                                                {/* PENDING = awaiting vendor approval, nothing for admin to do here */}
+                                                {coupon.status === "PENDING" && (
+
+                                                    <p className="text-sm text-gray-500 italic mb-3">
+                                                        Awaiting vendor approval
+                                                    </p>
+
+                                                )}
+
+
+                                                {/* ACTIVATE / DEACTIVATE */}
+
+                                                {coupon.status === "APPROVED" && (
+
+                                                    <button
+                                                        onClick={() =>
+                                                            handleToggleCoupon(coupon.id)
+                                                        }
+                                                        className={`w-full font-semibold py-2 rounded-lg transition ${
+                                                            coupon.active
+                                                                ? "bg-red-100 text-red-700 hover:bg-red-200"
+                                                                : "bg-green-100 text-green-700 hover:bg-green-200"
+                                                        }`}
+                                                    >
+
+                                                        {coupon.active
+                                                            ? "Deactivate Coupon"
+                                                            : "Activate Coupon"
+                                                        }
+
+                                                    </button>
+
+                                                )}
+
+                                            </div>
 
                                         </div>
 

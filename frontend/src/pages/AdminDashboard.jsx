@@ -283,6 +283,25 @@ function AdminDashboard() {
                     </Link>
 
 
+                    {/* Returns & Refunds */}
+
+                    <Link to="/admin/returns">
+
+                        <div className="bg-white rounded-xl shadow p-6 hover:shadow-xl hover:scale-105 transition cursor-pointer">
+
+                            <h2 className="text-xl font-bold">
+                                Returns & Refunds
+                            </h2>
+
+                            <p className="text-gray-500 mt-2">
+                                Review returns, inspections and refunds
+                            </p>
+
+                        </div>
+
+                    </Link>
+
+
                     {/* Coupons */}
 
                     <Link to="/admin/coupons">

@@ -11,22 +11,19 @@ function Navbar() {
 
     const [unreadCount, setUnreadCount] = useState(0);
 
-
     // ==========================================
     // FETCH UNREAD NOTIFICATION COUNT
     // ==========================================
 
     const fetchUnreadCount = async () => {
 
-        // Only vendors need vendor notifications
         if (role !== "VENDOR") {
             return;
         }
 
         try {
 
-            const token =
-                localStorage.getItem("token");
+            const token = localStorage.getItem("token");
 
             if (!token) {
                 return;
@@ -36,15 +33,12 @@ function Navbar() {
                 "http://localhost:8080/api/notifications/unread-count",
                 {
                     headers: {
-                        Authorization:
-                            `Bearer ${token}`
+                        Authorization: `Bearer ${token}`
                     }
                 }
             );
 
-            setUnreadCount(
-                Number(response.data)
-            );
+            setUnreadCount(Number(response.data));
 
         } catch (error) {
 
@@ -56,9 +50,8 @@ function Navbar() {
         }
     };
 
-
     // ==========================================
-    // LOAD COUNT
+    // LOAD NOTIFICATION COUNT
     // ==========================================
 
     useEffect(() => {
@@ -66,7 +59,6 @@ function Navbar() {
         fetchUnreadCount();
 
     }, [role, location.pathname]);
-
 
     // ==========================================
     // LOGOUT
@@ -80,7 +72,6 @@ function Navbar() {
         navigate("/");
 
     };
-
 
     return (
 
@@ -122,12 +113,17 @@ function Navbar() {
 
                     {/* CART */}
 
-                    <Link to="/cart">
+                    <Link
+                        to="/cart"
+                        className="hover:text-gray-200"
+                    >
                         Cart
                     </Link>
 
 
-                    {/* MY ORDERS */}
+                    {/* ==================================
+                        CUSTOMER MY ORDERS
+                    ================================== */}
 
                     <Link
                         to="/my-orders"
@@ -135,6 +131,22 @@ function Navbar() {
                     >
                         My Orders
                     </Link>
+
+
+                    {/* ==================================
+                        ADMIN RETURN & REFUND MANAGEMENT
+                    ================================== */}
+
+                    {role === "ADMIN" && (
+
+                        <Link
+                            to="/admin/returns"
+                            className="hover:text-gray-200"
+                        >
+                            Return & Refund Management
+                        </Link>
+
+                    )}
 
 
                     {/* ==================================
@@ -154,9 +166,6 @@ function Navbar() {
 
                             🔔 Notifications
 
-
-                            {/* UNREAD BADGE */}
-
                             {unreadCount > 0 && (
 
                                 <span
@@ -174,7 +183,9 @@ function Navbar() {
                     )}
 
 
-                    {/* VENDOR DASHBOARD */}
+                    {/* ==================================
+                        VENDOR DASHBOARD
+                    ================================== */}
 
                     {role === "VENDOR" && (
 
@@ -188,7 +199,25 @@ function Navbar() {
                     )}
 
 
-                    {/* LOGOUT */}
+                    {/* ==================================
+                        ADMIN DASHBOARD
+                    ================================== */}
+
+                    {role === "ADMIN" && (
+
+                        <Link
+                            to="/admin/dashboard"
+                            className="hover:text-gray-200"
+                        >
+                            Admin Dashboard
+                        </Link>
+
+                    )}
+
+
+                    {/* ==================================
+                        LOGOUT
+                    ================================== */}
 
                     <button
                         onClick={handleLogout}

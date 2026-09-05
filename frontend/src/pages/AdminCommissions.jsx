@@ -5,6 +5,7 @@ function AdminCommissions() {
 
     const [commissions, setCommissions] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [payingId, setPayingId] = useState(null);
 
     const fetchCommissions = async () => {
 
@@ -50,6 +51,50 @@ function AdminCommissions() {
         fetchCommissions();
 
     }, []);
+
+
+    // =========================================================
+    // MARK COMMISSION AS PAID
+    // =========================================================
+
+    const handleMarkAsPaid = async (commissionId) => {
+
+        try {
+
+            setPayingId(commissionId);
+
+            const token = localStorage.getItem("token");
+
+            await axios.patch(
+                `http://localhost:8080/api/admin/commissions/${commissionId}/pay`,
+                {},
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+
+            await fetchCommissions();
+
+        } catch (error) {
+
+            console.error(
+                "Error marking commission as paid:",
+                error
+            );
+
+            alert(
+                error.response?.data ||
+                "Failed to mark commission as paid"
+            );
+
+        } finally {
+
+            setPayingId(null);
+
+        }
+    };
 
 
     const totalCommission = commissions.reduce(
@@ -248,6 +293,10 @@ function AdminCommissions() {
                                         Date
                                     </th>
 
+                                    <th className="px-6 py-4 text-center">
+                                        Action
+                                    </th>
+
                                 </tr>
 
                                 </thead>
@@ -305,7 +354,15 @@ function AdminCommissions() {
 
                                         <td className="px-6 py-4 text-center">
 
-                                                <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-semibold">
+                                                <span
+                                                    className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                                                        commission.status === "PAID"
+                                                            ? "bg-green-100 text-green-700"
+                                                            : commission.status === "CANCELLED"
+                                                                ? "bg-red-100 text-red-700"
+                                                                : "bg-yellow-100 text-yellow-700"
+                                                    }`}
+                                                >
 
                                                     {commission.status}
 
@@ -322,6 +379,35 @@ function AdminCommissions() {
                                                 ).toLocaleString()
                                                 : "-"
                                             }
+
+                                        </td>
+
+
+                                        <td className="px-6 py-4 text-center">
+
+                                            {commission.status === "PAID" ||
+                                            commission.status === "CANCELLED" ? (
+
+                                                <span className="text-gray-400 text-sm">
+                                                    —
+                                                </span>
+
+                                            ) : (
+
+                                                <button
+                                                    onClick={() =>
+                                                        handleMarkAsPaid(commission.id)
+                                                    }
+                                                    disabled={payingId === commission.id}
+                                                    className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-semibold px-3 py-1.5 rounded-lg"
+                                                >
+                                                    {payingId === commission.id
+                                                        ? "Marking..."
+                                                        : "Mark as Paid"
+                                                    }
+                                                </button>
+
+                                            )}
 
                                         </td>
 

@@ -28,6 +28,8 @@ public class Order {
     @Column(nullable = false)
     private LocalDateTime orderDate;
 
+    private LocalDateTime deliveredAt;
+
     @Column
     private String paymentMethod;
 
@@ -86,6 +88,14 @@ public class Order {
 
     public void setOrderDate(LocalDateTime orderDate) {
         this.orderDate = orderDate;
+    }
+
+    public LocalDateTime getDeliveredAt() {
+        return deliveredAt;
+    }
+
+    public void setDeliveredAt(LocalDateTime deliveredAt) {
+        this.deliveredAt = deliveredAt;
     }
 
     public List<OrderItem> getItems() {

@@ -5,6 +5,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -30,23 +31,55 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         System.out.println("========== JWT FILTER ==========");
         System.out.println("Request URI: " + request.getRequestURI());
+        System.out.println("Request Method: " + request.getMethod());
 
         String authHeader = request.getHeader("Authorization");
 
-        System.out.println("Authorization Header: " + authHeader);
+        System.out.println(
+                "Authorization Header: " +
+                        (authHeader != null ? "Present" : "Not Present")
+        );
 
-        if (authHeader != null &&
-                authHeader.startsWith("Bearer ")) {
+        // =================================================
+        // NO AUTHORIZATION HEADER
+        // =================================================
 
-            String token = authHeader.substring(7);
+        if (authHeader == null ||
+                !authHeader.startsWith("Bearer ")) {
 
-            try {
+            System.out.println(
+                    "No Bearer token - continuing request"
+            );
 
-                String email = jwtService.extractEmail(token);
-                String role = jwtService.extractRole(token);
+            filterChain.doFilter(request, response);
+            return;
+        }
 
-                System.out.println("Email: " + email);
-                System.out.println("Role: " + role);
+        // =================================================
+        // EXTRACT TOKEN
+        // =================================================
+
+        String token = authHeader.substring(7);
+
+        try {
+
+            // =============================================
+            // EXTRACT USER DETAILS FROM JWT
+            // =============================================
+
+            String email = jwtService.extractEmail(token);
+            String role = jwtService.extractRole(token);
+
+            System.out.println("Email: " + email);
+            System.out.println("Role: " + role);
+
+            // =============================================
+            // ONLY SET AUTHENTICATION IF CONTEXT IS EMPTY
+            // =============================================
+
+            if (SecurityContextHolder
+                    .getContext()
+                    .getAuthentication() == null) {
 
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(
@@ -86,13 +119,30 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                         .isAuthenticated()
                 );
 
-            } catch (Exception e) {
+            } else {
 
                 System.out.println(
-                        "JWT ERROR: " + e.getMessage()
+                        "SecurityContext already contains authentication"
                 );
             }
+
+        } catch (Exception e) {
+
+            // =============================================
+            // INVALID JWT
+            // =============================================
+
+            System.out.println(
+                    "JWT ERROR: " + e.getMessage()
+            );
+
+            // Do NOT create authentication
+            // for an invalid token.
         }
+
+        // =================================================
+        // CONTINUE REQUEST
+        // =================================================
 
         filterChain.doFilter(request, response);
     }

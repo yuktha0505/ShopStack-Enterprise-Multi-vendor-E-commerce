@@ -2,6 +2,7 @@ package com.shopstack.backend.service;
 
 import com.razorpay.Order;
 import com.razorpay.RazorpayClient;
+import com.razorpay.Refund;
 import com.razorpay.Utils;
 import com.shopstack.backend.dto.PaymentVerificationRequest;
 import org.json.JSONObject;
@@ -99,4 +100,63 @@ public class PaymentService {
             );
         }
     }
+
+    // ==========================================
+    // CREATE RAZORPAY REFUND
+    // ==========================================
+
+    public Refund refundPayment(
+            String razorpayPaymentId,
+            Double amount,
+            String receipt
+    ) {
+        try {
+            if (razorpayPaymentId == null || razorpayPaymentId.isBlank()) {
+                throw new RuntimeException("Razorpay payment ID is required");
+            }
+
+            if (amount == null || amount <= 0) {
+                throw new RuntimeException("Invalid refund amount");
+            }
+
+            int amountInPaise = (int) Math.round(amount * 100);
+
+            JSONObject refundRequest = new JSONObject();
+            refundRequest.put("amount", amountInPaise);
+            refundRequest.put("receipt", receipt);
+
+            return razorpayClient.payments.refund(
+                    razorpayPaymentId,
+                    refundRequest
+            );
+
+        } catch (Exception e) {
+            throw new RuntimeException(
+                    "Razorpay refund failed: " + e.getMessage(),
+                    e
+            );
+        }
+    }
+
+    // ==========================================
+    // FETCH RAZORPAY REFUND
+    // ==========================================
+
+    public Refund fetchRefund(
+            String razorpayPaymentId,
+            String refundId
+    ) {
+        try {
+            return razorpayClient.payments.fetchRefund(
+                    razorpayPaymentId,
+                    refundId
+            );
+        } catch (Exception e) {
+            throw new RuntimeException(
+                    "Unable to fetch Razorpay refund: " + e.getMessage(),
+                    e
+            );
+        }
+    }
+
 }

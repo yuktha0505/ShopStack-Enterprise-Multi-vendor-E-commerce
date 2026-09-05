@@ -26,13 +26,15 @@ public class PaymentController {
 
         try {
 
-            String order = paymentService.createPaymentOrder(
-                    request.getAmount()
+            return ResponseEntity.ok(
+                    paymentService.createPaymentOrder(
+                            request.getAmount()
+                    )
             );
 
-            return ResponseEntity.ok(order);
-
         } catch (Exception e) {
+
+            e.printStackTrace();
 
             return ResponseEntity
                     .badRequest()
@@ -63,9 +65,13 @@ public class PaymentController {
 
             return ResponseEntity
                     .badRequest()
-                    .body("Payment Verification Failed");
+                    .body(
+                            "Payment Verification Failed"
+                    );
 
         } catch (Exception e) {
+
+            e.printStackTrace();
 
             return ResponseEntity
                     .badRequest()

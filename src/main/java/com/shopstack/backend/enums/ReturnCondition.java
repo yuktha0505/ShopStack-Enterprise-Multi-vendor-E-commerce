@@ -1,4 +1,8 @@
 package com.shopstack.backend.enums;
 
-public class ReturnCondition {
+public enum ReturnCondition {
+    SELLABLE,
+    DAMAGED,
+    DEFECTIVE,
+    UNUSABLE
 }

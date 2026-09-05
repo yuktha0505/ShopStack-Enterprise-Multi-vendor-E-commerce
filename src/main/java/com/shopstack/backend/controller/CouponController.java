@@ -28,14 +28,23 @@ public class CouponController {
     // =========================================================
 
     @PostMapping
-    public ResponseEntity<CouponResponse> createCoupon(
+    public ResponseEntity<?> createCoupon(
             @RequestBody CreateCouponRequest request
     ) {
 
-        CouponResponse response =
-                couponService.createCoupon(request);
+        try {
 
-        return ResponseEntity.ok(response);
+            CouponResponse response =
+                    couponService.createCoupon(request);
+
+            return ResponseEntity.ok(response);
+
+        } catch (RuntimeException e) {
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(e.getMessage());
+        }
     }
 
 
@@ -74,21 +83,36 @@ public class CouponController {
     // =========================================================
 
     @PostMapping("/apply")
-    public ResponseEntity<CouponApplyResponse> applyCoupon(
-            @RequestBody ApplyCouponRequest request
+    public ResponseEntity<?> applyCoupon(
+            @RequestBody ApplyCouponRequest request,
+            Authentication authentication
     ) {
 
-        CouponApplyResponse response =
-                couponService.applyCoupon(request);
+        try {
 
-        return ResponseEntity.ok(response);
+            CouponApplyResponse response =
+                    couponService.applyCoupon(
+                            request,
+                            authentication.getName()
+                    );
+
+            return ResponseEntity.ok(response);
+
+        } catch (RuntimeException e) {
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(e.getMessage());
+        }
     }
 
     @GetMapping("/vendor")
     public ResponseEntity<List<CouponResponse>> getVendorCoupons(
             Authentication authentication
     ) {
-
+        System.out.println("🔥 VENDOR COUPON CONTROLLER REACHED");
+        System.out.println("User: " + authentication.getName());
+        System.out.println("Authorities: " + authentication.getAuthorities());
         return ResponseEntity.ok(
                 couponService.getVendorCoupons(
                         authentication.getName()
@@ -133,6 +157,20 @@ public class CouponController {
                 couponService.getAvailableCoupons(
                         authentication.getName()
                 )
+        );
+    }
+
+    // =========================================================
+// ADMIN - ACTIVATE / DEACTIVATE COUPON
+// =========================================================
+
+    @PutMapping("/{id}/toggle")
+    public ResponseEntity<CouponResponse> toggleCoupon(
+            @PathVariable Long id
+    ) {
+
+        return ResponseEntity.ok(
+                couponService.toggleCoupon(id)
         );
     }
 }

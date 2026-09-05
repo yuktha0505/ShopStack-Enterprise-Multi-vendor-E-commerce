@@ -1,12 +1,11 @@
 package com.shopstack.backend.config;
 
-import com.shopstack.backend.filter.JwtAuthenticationFilter;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -16,140 +15,179 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import com.shopstack.backend.filter.JwtAuthenticationFilter;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
+
 import java.util.List;
 
 @Configuration
+@EnableWebSecurity
 public class SecurityConfig {
 
-    @Autowired
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+    }
+
+    // =====================================================
+    // PREVENT SPRING BOOT FROM ALSO AUTO-REGISTERING
+    // JwtAuthenticationFilter AS A PLAIN SERVLET FILTER
+    // (it's already wired into the Security chain below)
+    // =====================================================
+
+    @Bean
+    public FilterRegistrationBean<JwtAuthenticationFilter> jwtFilterRegistration(
+            JwtAuthenticationFilter filter) {
+
+        FilterRegistrationBean<JwtAuthenticationFilter> registration =
+                new FilterRegistrationBean<>(filter);
+
+        registration.setEnabled(false);
+        return registration;
+    }
+
+    // =====================================================
+    // PASSWORD ENCODER
+    // =====================================================
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    // =====================================================
+    // SECURITY FILTER CHAIN
+    // =====================================================
 
     @Bean
     public SecurityFilterChain securityFilterChain(
-            HttpSecurity http
-    ) throws Exception {
+            HttpSecurity http) throws Exception {
 
         http
 
+                // ==========================================
                 // CORS
-                .cors(cors ->
-                        cors.configurationSource(
-                                corsConfigurationSource()
-                        )
-                )
+                // ==========================================
+                .cors(Customizer.withDefaults())
 
-                // CSRF disabled because this is a JWT REST API
+                // ==========================================
+                // CSRF
+                // ==========================================
                 .csrf(csrf -> csrf.disable())
 
-                // Stateless authentication
+                // ==========================================
+                // SESSION
+                // ==========================================
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(
                                 SessionCreationPolicy.STATELESS
                         )
                 )
 
-                // Authorization
+                // ==========================================
+                // AUTHORIZATION
+                // ==========================================
                 .authorizeHttpRequests(auth -> auth
 
-                        // Authentication APIs
+                        // ----------------------------------
+                        // CORS preflight
+                        // ----------------------------------
+                        .requestMatchers(
+                                HttpMethod.OPTIONS,
+                                "/**"
+                        ).permitAll()
+
+                        // ----------------------------------
+                        // Authentication
+                        // ----------------------------------
                         .requestMatchers(
                                 "/api/auth/**"
                         ).permitAll()
 
-
-                        // ==============================
-                        // ADMIN COUPON APIs
-                        // ==============================
-
-                        .requestMatchers(
-                                HttpMethod.POST,
-                                "/api/coupons"
-                        ).hasRole("ADMIN")
-
+                        // ----------------------------------
+                        // PUBLIC PRODUCT BROWSING
+                        // ----------------------------------
                         .requestMatchers(
                                 HttpMethod.GET,
-                                "/api/coupons"
+                                "/api/products/**"
+                        ).permitAll()
+
+                        // ----------------------------------
+                        // ADMIN APIs
+                        // ----------------------------------
+                        .requestMatchers(
+                                "/api/admin/**"
                         ).hasRole("ADMIN")
 
-                        .requestMatchers(
-                                HttpMethod.GET,
-                                "/api/coupons/{id}"
-                        ).hasRole("ADMIN")
-
-
-                        // ==============================
-                        // CUSTOMER COUPON APIs
-                        // ==============================
-
-                        .requestMatchers(
-                                HttpMethod.GET,
-                                "/api/coupons/available"
-                        ).authenticated()
-
-                        .requestMatchers(
-                                HttpMethod.POST,
-                                "/api/coupons/apply"
-                        ).authenticated()
-
-
-                        // ==============================
-                        // VENDOR COUPON APIs
-                        // ==============================
-
+                        // ----------------------------------
+                        // COUPONS - vendor self-service
+                        // ----------------------------------
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/coupons/vendor"
                         ).hasRole("VENDOR")
 
+                        // ----------------------------------
+                        // COUPONS - customer actions
+                        // ----------------------------------
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/coupons/apply"
+                        ).hasRole("CUSTOMER")
+
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/coupons/available"
+                        ).hasRole("CUSTOMER")
+
+                        // ----------------------------------
+                        // COUPONS - vendor moderation actions
+                        // (a vendor approves/rejects coupons
+                        //  created for their own products)
+                        // ----------------------------------
                         .requestMatchers(
                                 HttpMethod.PUT,
-                                "/api/coupons/{id}/approve"
+                                "/api/coupons/*/approve",
+                                "/api/coupons/*/reject"
                         ).hasRole("VENDOR")
 
+                        // ----------------------------------
+                        // COUPONS - admin activate/deactivate
+                        // ----------------------------------
                         .requestMatchers(
                                 HttpMethod.PUT,
-                                "/api/coupons/{id}/reject"
-                        ).hasRole("VENDOR")
-
-
-                        // ==============================
-                        // OTHER ADMIN APIs
-                        // ==============================
-
-                        .requestMatchers(
-                                "/api/admin/**"
+                                "/api/coupons/*/toggle"
                         ).hasRole("ADMIN")
 
+                        // ----------------------------------
+                        // COUPONS - admin management
+                        // (create / list / view / everything
+                        //  else under /api/coupons)
+                        // ----------------------------------
+                        .requestMatchers(
+                                "/api/coupons/**"
+                        ).hasRole("ADMIN")
 
-                        // ==============================
+                        // ----------------------------------
                         // EVERYTHING ELSE
-                        // ==============================
-
+                        // ----------------------------------
                         .anyRequest().authenticated()
                 )
 
-
-                // JWT filter
+                // ==========================================
+                // JWT FILTER
+                // ==========================================
                 .addFilterBefore(
                         jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class
                 );
 
-
         return http.build();
     }
 
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-
-        return new BCryptPasswordEncoder();
-    }
-
-
     // =====================================================
-    // CORS
+    // GLOBAL CORS CONFIGURATION
     // =====================================================
 
     @Bean
@@ -158,27 +196,41 @@ public class SecurityConfig {
         CorsConfiguration configuration =
                 new CorsConfiguration();
 
+        // Frontend
         configuration.setAllowedOrigins(
                 List.of("http://localhost:5173")
         );
 
+        // HTTP methods
         configuration.setAllowedMethods(
                 List.of(
                         "GET",
                         "POST",
                         "PUT",
+                        "PATCH",
                         "DELETE",
                         "OPTIONS"
                 )
         );
 
+        // Request headers
         configuration.setAllowedHeaders(
-                List.of("*")
+                List.of(
+                        "Authorization",
+                        "Content-Type",
+                        "Accept"
+                )
         );
 
+        // Response headers
+        configuration.setExposedHeaders(
+                List.of("Authorization")
+        );
+
+        // Cookies / credentials
         configuration.setAllowCredentials(true);
 
-
+        // Apply CORS configuration to all endpoints
         UrlBasedCorsConfigurationSource source =
                 new UrlBasedCorsConfigurationSource();
 
@@ -188,28 +240,5 @@ public class SecurityConfig {
         );
 
         return source;
-    }
-
-
-    // =====================================================
-    // IMPORTANT:
-    // Prevent Spring Boot from registering the JWT filter
-    // as a normal servlet filter.
-    // It should ONLY run through Spring Security.
-    // =====================================================
-
-    @Bean
-    public FilterRegistrationBean<JwtAuthenticationFilter>
-    jwtAuthenticationFilterRegistration(
-            JwtAuthenticationFilter filter
-    ) {
-
-        FilterRegistrationBean<JwtAuthenticationFilter>
-                registration =
-                new FilterRegistrationBean<>(filter);
-
-        registration.setEnabled(false);
-
-        return registration;
     }
 }

@@ -1,27 +1,30 @@
 package com.shopstack.backend.service;
 
+import com.shopstack.backend.dto.AdminAnalyticsResponse;
+import com.shopstack.backend.dto.AdminCommissionResponse;
 import com.shopstack.backend.dto.AdminDashboardResponse;
+import com.shopstack.backend.dto.AdminOrderResponse;
+import com.shopstack.backend.dto.AdminVendorResponse;
 import com.shopstack.backend.dto.VendorResponse;
+
+import com.shopstack.backend.entity.Commission;
 import com.shopstack.backend.entity.Order;
+import com.shopstack.backend.entity.OrderStatus;
 import com.shopstack.backend.entity.User;
+
 import com.shopstack.backend.enums.Role;
+
+import com.shopstack.backend.repository.CommissionRepository;
 import com.shopstack.backend.repository.OrderRepository;
 import com.shopstack.backend.repository.ProductRepository;
 import com.shopstack.backend.repository.UserRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import com.shopstack.backend.dto.AdminVendorResponse;
-import java.util.*;
-import com.shopstack.backend.dto.AdminAnalyticsResponse;
-import com.shopstack.backend.entity.OrderStatus;
-import com.shopstack.backend.dto.AdminOrderResponse;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
-import com.shopstack.backend.dto.AdminCommissionResponse;
-import com.shopstack.backend.entity.Commission;
-import com.shopstack.backend.repository.CommissionRepository;
-
-
-
 
 
 @Service
@@ -38,33 +41,34 @@ public class AdminService {
 
     @Autowired
     private CommissionRepository commissionRepository;
-    // ==========================================
+
+
+    // =========================================================
     // ADMIN DASHBOARD
-    // ==========================================
+    // =========================================================
 
     public AdminDashboardResponse getDashboardData() {
 
-        // Total users
         long totalUsers =
                 userRepository.count();
 
-        // Total vendors
         long totalVendors =
                 userRepository.countByRole(Role.VENDOR);
 
-        // Total products
         long totalProducts =
                 productRepository.count();
 
-        // Total orders
         long totalOrders =
                 orderRepository.count();
 
-        // Total sales
         double totalSales =
                 orderRepository.findAll()
                         .stream()
-                        .mapToDouble(Order::getTotalAmount)
+                        .mapToDouble(order ->
+                                order.getTotalAmount() != null
+                                        ? order.getTotalAmount()
+                                        : 0.0
+                        )
                         .sum();
 
         return new AdminDashboardResponse(
@@ -77,16 +81,9 @@ public class AdminService {
     }
 
 
-    // ==========================================
-    // VENDOR MANAGEMENT
-    // ==========================================
-
-
-
-
-    // ==========================================
+    // =========================================================
     // CONVERT USER → VENDOR RESPONSE
-    // ==========================================
+    // =========================================================
 
     private VendorResponse convertToVendorResponse(User user) {
 
@@ -103,13 +100,18 @@ public class AdminService {
         );
     }
 
+
+    // =========================================================
+    // GET ALL VENDORS
+    // =========================================================
+
     public List<AdminVendorResponse> getAllVendors() {
 
         List<User> vendors =
                 userRepository.findByRole(Role.VENDOR);
 
         List<AdminVendorResponse> responses =
-                new java.util.ArrayList<>();
+                new ArrayList<>();
 
         for (User vendor : vendors) {
 
@@ -137,9 +139,15 @@ public class AdminService {
         return responses;
     }
 
+
+    // =========================================================
+    // ADMIN ANALYTICS
+    // =========================================================
+
     public AdminAnalyticsResponse getAnalyticsData() {
 
-        long totalUsers = userRepository.count();
+        long totalUsers =
+                userRepository.count();
 
         long totalVendors =
                 userRepository.countByRole(Role.VENDOR);
@@ -156,10 +164,24 @@ public class AdminService {
         List<Order> orders =
                 orderRepository.findAll();
 
+
+        // -----------------------------------------------------
+        // TOTAL SALES
+        // -----------------------------------------------------
+
         double totalSales =
                 orders.stream()
-                        .mapToDouble(Order::getTotalAmount)
+                        .mapToDouble(order ->
+                                order.getTotalAmount() != null
+                                        ? order.getTotalAmount()
+                                        : 0.0
+                        )
                         .sum();
+
+
+        // -----------------------------------------------------
+        // ORDER STATUS COUNTS
+        // -----------------------------------------------------
 
         long placedOrders =
                 orders.stream()
@@ -167,11 +189,13 @@ public class AdminService {
                                 order.getStatus() == OrderStatus.PLACED)
                         .count();
 
+
         long confirmedOrders =
                 orders.stream()
                         .filter(order ->
                                 order.getStatus() == OrderStatus.CONFIRMED)
                         .count();
+
 
         long processingOrders =
                 orders.stream()
@@ -179,11 +203,13 @@ public class AdminService {
                                 order.getStatus() == OrderStatus.PROCESSING)
                         .count();
 
+
         long shippedOrders =
                 orders.stream()
                         .filter(order ->
                                 order.getStatus() == OrderStatus.SHIPPED)
                         .count();
+
 
         long outForDeliveryOrders =
                 orders.stream()
@@ -191,17 +217,20 @@ public class AdminService {
                                 order.getStatus() == OrderStatus.OUT_FOR_DELIVERY)
                         .count();
 
+
         long deliveredOrders =
                 orders.stream()
                         .filter(order ->
                                 order.getStatus() == OrderStatus.DELIVERED)
                         .count();
 
+
         long cancelledOrders =
                 orders.stream()
                         .filter(order ->
                                 order.getStatus() == OrderStatus.CANCELLED)
                         .count();
+
 
         return new AdminAnalyticsResponse(
                 totalUsers,
@@ -220,6 +249,11 @@ public class AdminService {
         );
     }
 
+
+    // =========================================================
+    // GET ALL ORDERS
+    // =========================================================
+
     public List<AdminOrderResponse> getAllOrders() {
 
         List<Order> orders =
@@ -227,15 +261,32 @@ public class AdminService {
 
         return orders.stream()
                 .map(order -> new AdminOrderResponse(
+
                         order.getId(),
-                        order.getUser().getName(),
-                        order.getUser().getEmail(),
+
+                        order.getUser() != null
+                                ? order.getUser().getName()
+                                : "Unknown",
+
+                        order.getUser() != null
+                                ? order.getUser().getEmail()
+                                : "Unknown",
+
                         order.getTotalAmount(),
-                        order.getStatus().name(),
+
+                        order.getStatus() != null
+                                ? order.getStatus().name()
+                                : "UNKNOWN",
+
                         order.getOrderDate()
                 ))
                 .collect(Collectors.toList());
     }
+
+
+    // =========================================================
+    // GET ALL COMMISSIONS
+    // =========================================================
 
     public List<AdminCommissionResponse> getAllCommissions() {
 
@@ -245,24 +296,191 @@ public class AdminService {
         List<AdminCommissionResponse> responses =
                 new ArrayList<>();
 
+
         for (Commission commission : commissions) {
+
+            if (commission == null) {
+                continue;
+            }
+
+
+            String vendorName = "Unknown";
+
+            Long vendorId = null;
+
+            if (commission.getVendor() != null) {
+
+                vendorId =
+                        commission.getVendor().getId();
+
+                vendorName =
+                        commission.getVendor().getName();
+            }
+
+
+            Long orderId = null;
+
+            if (commission.getOrder() != null) {
+
+                orderId =
+                        commission.getOrder().getId();
+            }
+
+
+            String status = "UNKNOWN";
+
+            if (commission.getStatus() != null) {
+
+                status =
+                        commission.getStatus().name();
+            }
+
 
             responses.add(
                     new AdminCommissionResponse(
+
                             commission.getId(),
-                            commission.getOrder().getId(),
-                            commission.getVendor().getId(),
-                            commission.getVendor().getName(),
+
+                            orderId,
+
+                            vendorId,
+
+                            vendorName,
+
                             commission.getSaleAmount(),
+
                             commission.getCommissionRate(),
+
                             commission.getCommissionAmount(),
+
                             commission.getVendorAmount(),
-                            commission.getStatus().name(),
+
+                            status,
+
                             commission.getCreatedAt()
                     )
             );
         }
 
         return responses;
+    }
+
+
+    // =========================================================
+    // MARK COMMISSION AS PAID
+    // =========================================================
+
+    public AdminCommissionResponse markCommissionAsPaid(
+            Long commissionId) {
+
+        Commission commission =
+                commissionRepository
+                        .findById(commissionId)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Commission not found with ID: "
+                                                + commissionId
+                                )
+                        );
+
+
+        // -----------------------------------------------------
+        // PREVENT DUPLICATE PAYMENT
+        // -----------------------------------------------------
+
+        if (commission.getStatus() != null &&
+                commission.getStatus().name().equals("PAID")) {
+
+            throw new RuntimeException(
+                    "Commission has already been paid"
+            );
+        }
+
+
+        // -----------------------------------------------------
+        // PREVENT PAYMENT OF CANCELLED COMMISSION
+        // -----------------------------------------------------
+
+        if (commission.getStatus() != null &&
+                commission.getStatus().name().equals("CANCELLED")) {
+
+            throw new RuntimeException(
+                    "Cancelled commission cannot be paid"
+            );
+        }
+
+
+        // -----------------------------------------------------
+        // CHANGE STATUS
+        // -----------------------------------------------------
+
+        commission.setStatus(
+                com.shopstack.backend.entity.CommissionStatus.PAID
+        );
+
+
+        // -----------------------------------------------------
+        // SAVE
+        // -----------------------------------------------------
+
+        Commission savedCommission =
+                commissionRepository.save(commission);
+
+
+        // -----------------------------------------------------
+        // PREPARE RESPONSE
+        // -----------------------------------------------------
+
+        Long vendorId = null;
+
+        String vendorName = "Unknown";
+
+        if (savedCommission.getVendor() != null) {
+
+            vendorId =
+                    savedCommission.getVendor().getId();
+
+            vendorName =
+                    savedCommission.getVendor().getName();
+        }
+
+
+        Long orderId = null;
+
+        if (savedCommission.getOrder() != null) {
+
+            orderId =
+                    savedCommission.getOrder().getId();
+        }
+
+
+        String status =
+                savedCommission.getStatus() != null
+                        ? savedCommission.getStatus().name()
+                        : "UNKNOWN";
+
+
+        return new AdminCommissionResponse(
+
+                savedCommission.getId(),
+
+                orderId,
+
+                vendorId,
+
+                vendorName,
+
+                savedCommission.getSaleAmount(),
+
+                savedCommission.getCommissionRate(),
+
+                savedCommission.getCommissionAmount(),
+
+                savedCommission.getVendorAmount(),
+
+                status,
+
+                savedCommission.getCreatedAt()
+        );
     }
 }

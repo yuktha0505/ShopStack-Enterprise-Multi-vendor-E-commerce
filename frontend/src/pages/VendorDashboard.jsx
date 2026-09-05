@@ -93,6 +93,22 @@ function VendorDashboard() {
 
                     </Link>
 
+                    <Link to="/vendor/coupons">
+
+                        <div className="bg-white rounded-xl shadow p-6 hover:shadow-xl transition cursor-pointer">
+
+                            <h2 className="text-xl font-bold">
+                                Coupons
+                            </h2>
+
+                            <p className="text-gray-500 mt-2">
+                                Review and manage your coupons
+                            </p>
+
+                        </div>
+
+                    </Link>
+
 
                     {/* NOTIFICATIONS */}
 
