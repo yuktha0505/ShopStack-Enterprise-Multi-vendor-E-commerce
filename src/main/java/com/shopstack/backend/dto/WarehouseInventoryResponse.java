@@ -1,4 +1,3 @@
 package com.shopstack.backend.dto;
 
-public class WarehouseInventoryResponse {
-}
+public record WarehouseInventoryResponse(Long id, Long warehouseId, String warehouseName, Long productId, String productName, Integer quantity, Integer reservedQuantity, Integer availableQuantity) {}

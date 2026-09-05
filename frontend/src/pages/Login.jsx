@@ -45,8 +45,9 @@ function Login() {
 
                 navigate("/vendor/dashboard");
 
+            }else if (role === "WAREHOUSE_STAFF") {
+                navigate("/warehouse-staff/dashboard");
             } else {
-
                 navigate("/home");
             }
 

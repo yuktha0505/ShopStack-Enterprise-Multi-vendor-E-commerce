@@ -214,6 +214,18 @@ function Navbar() {
 
                     )}
 
+                    {role === "ADMIN" && (
+                        <Link to="/admin/warehouses" className="hover:text-gray-200">
+                            Warehouses
+                        </Link>
+                    )}
+
+                    {role === "WAREHOUSE_STAFF" && (
+                        <Link to="/warehouse-staff/dashboard" className="hover:text-gray-200">
+                            Warehouse Operations
+                        </Link>
+                    )}
+
 
                     {/* ==================================
                         LOGOUT

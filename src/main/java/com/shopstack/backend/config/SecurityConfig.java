@@ -121,6 +121,13 @@ public class SecurityConfig {
                         ).hasRole("ADMIN")
 
                         // ----------------------------------
+                        // WAREHOUSE STAFF APIs
+                        // ----------------------------------
+                        .requestMatchers(
+                                "/api/warehouse-staff/**"
+                        ).hasRole("WAREHOUSE_STAFF")
+
+                        // ----------------------------------
                         // COUPONS - vendor self-service
                         // ----------------------------------
                         .requestMatchers(

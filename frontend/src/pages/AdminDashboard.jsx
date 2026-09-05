@@ -204,9 +204,7 @@ function AdminDashboard() {
                     Management
                 </h2>
 
-
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-
 
                     {/* Vendors */}
 
@@ -263,6 +261,7 @@ function AdminDashboard() {
                         </div>
 
                     </Link>
+
 
                     {/* Commissions */}
 
@@ -321,6 +320,44 @@ function AdminDashboard() {
                     </Link>
 
 
+                    {/* Warehouse Management */}
+
+                    <Link to="/admin/warehouses">
+
+                        <div className="bg-white rounded-xl shadow p-6 hover:shadow-xl hover:scale-105 transition cursor-pointer">
+
+                            <h2 className="text-xl font-bold">
+                                Warehouse Management
+                            </h2>
+
+                            <p className="text-gray-500 mt-2">
+                                Manage warehouses and warehouse inventory
+                            </p>
+
+                        </div>
+
+                    </Link>
+
+
+                    {/* Warehouse Analytics */}
+
+                    <Link to="/admin/warehouse-analytics">
+
+                        <div className="bg-white rounded-xl shadow p-6 hover:shadow-xl hover:scale-105 transition cursor-pointer">
+
+                            <h2 className="text-xl font-bold">
+                                Warehouse Analytics
+                            </h2>
+
+                            <p className="text-gray-500 mt-2">
+                                Monitor warehouse allocation and operations
+                            </p>
+
+                        </div>
+
+                    </Link>
+
+
                     {/* Reports */}
 
                     <div className="bg-white rounded-xl shadow p-6 hover:shadow-xl transition cursor-pointer">
@@ -336,7 +373,6 @@ function AdminDashboard() {
                     </div>
 
                 </div>
-
             </div>
 
         </div>

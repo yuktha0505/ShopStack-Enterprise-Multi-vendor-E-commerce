@@ -34,6 +34,10 @@ public class User {
 
     private String pincode;
 
+    @ManyToOne
+    @JoinColumn(name = "warehouse_id")
+    private Warehouse warehouse;
+
     public User() {
     }
 
@@ -115,5 +119,13 @@ public class User {
 
     public void setPincode(String pincode) {
         this.pincode = pincode;
+    }
+
+    public Warehouse getWarehouse() {
+        return warehouse;
+    }
+
+    public void setWarehouse(Warehouse warehouse) {
+        this.warehouse = warehouse;
     }
 }

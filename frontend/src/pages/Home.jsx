@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 
 function Home() {
 
+
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
 

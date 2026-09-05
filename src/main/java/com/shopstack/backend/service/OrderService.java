@@ -48,6 +48,9 @@ public class OrderService {
     @Autowired
     private NotificationService notificationService;
 
+    @Autowired
+    private WarehouseService warehouseService;
+
 
     // =========================================================
     // PLACE ORDER
@@ -868,7 +871,19 @@ public class OrderService {
         // UPDATE
         // -----------------------------------------------------
 
+        if (newStatus == OrderStatus.CANCELLED) {
+            warehouseService.releaseAllocation(order.getId());
+        }
+
         order.setStatus(newStatus);
+
+        if (newStatus == OrderStatus.CONFIRMED) {
+            // Allocation is part of confirmation: if no active warehouse can
+            // satisfy the complete order, the transaction fails and the order
+            // remains in PLACED state.
+            orderRepository.save(order);
+            warehouseService.allocateOrder(order.getId());
+        }
 
         if (newStatus == OrderStatus.DELIVERED) {
             order.setDeliveredAt(LocalDateTime.now());

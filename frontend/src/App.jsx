@@ -41,6 +41,9 @@ import AdminAnalytics from "./pages/AdminAnalytics";
 import AdminCommissions from "./pages/AdminCommissions";
 import AdminCoupons from "./pages/AdminCoupons";
 import AdminReturns from "./pages/AdminReturns";
+import AdminWarehouses from "./pages/AdminWarehouses";
+import WarehouseAnalytics from "./pages/WarehouseAnalytics";
+import WarehouseStaffDashboard from "./pages/WarehouseStaffDashboard";
 
 
 // ==============================
@@ -363,6 +366,12 @@ function App() {
                         </ProtectedRoute>
                     }
                 />
+
+                <Route path="/admin/warehouses" element={<ProtectedRoute><AdminWarehouses /></ProtectedRoute>} />
+
+                <Route path="/admin/warehouse-analytics" element={<ProtectedRoute><WarehouseAnalytics /></ProtectedRoute>} />
+
+                <Route path="/warehouse-staff/dashboard" element={<ProtectedRoute><WarehouseStaffDashboard /></ProtectedRoute>} />
 
 
 

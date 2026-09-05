@@ -1,4 +1,9 @@
 package com.shopstack.backend.enums;
 
-public class StockMovementType {
+public enum StockMovementType {
+    RESERVED,
+    PICKED,
+    PACKED,
+    SHIPMENT_READY,
+    RELEASED
 }
