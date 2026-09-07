@@ -22,7 +22,7 @@ import com.shopstack.backend.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
+import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,6 +51,8 @@ public class OrderService {
     @Autowired
     private WarehouseService warehouseService;
 
+    @Autowired
+    private CommissionService commissionService;
 
     // =========================================================
     // PLACE ORDER
@@ -761,7 +763,7 @@ public class OrderService {
     // =========================================================
     // UPDATE ORDER STATUS
     // =========================================================
-
+    @Transactional
     public String updateOrderStatus(
             Long orderId,
             String email,
@@ -883,6 +885,8 @@ public class OrderService {
             // remains in PLACED state.
             orderRepository.save(order);
             warehouseService.allocateOrder(order.getId());
+            commissionService.calculateCommission(order.getId());
+
         }
 
         if (newStatus == OrderStatus.DELIVERED) {

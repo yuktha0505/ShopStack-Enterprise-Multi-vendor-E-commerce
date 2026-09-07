@@ -167,10 +167,10 @@ public class CommissionService {
             commission.setStatus(
                     CommissionStatus.CALCULATED
             );
-            commission.setCreatedAt(
-                    LocalDateTime.now()
-            );
+            LocalDateTime now = LocalDateTime.now();
 
+            commission.setCreatedAt(now);
+            commission.setCommissionDate(now);
 
             Commission saved =
                     commissionRepository.save(

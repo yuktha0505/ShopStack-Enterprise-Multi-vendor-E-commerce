@@ -43,9 +43,13 @@ public class Commission {
     @Column(nullable = false)
     private CommissionStatus status;
 
-    // Date commission was created
+    // Current commission creation timestamp
     @Column(nullable = false)
     private LocalDateTime createdAt;
+
+    // Legacy/database commission date column
+    @Column(name = "commission_date", nullable = false)
+    private LocalDateTime commissionDate;
 
     public Commission() {
     }
@@ -116,5 +120,13 @@ public class Commission {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getCommissionDate() {
+        return commissionDate;
+    }
+
+    public void setCommissionDate(LocalDateTime commissionDate) {
+        this.commissionDate = commissionDate;
     }
 }
