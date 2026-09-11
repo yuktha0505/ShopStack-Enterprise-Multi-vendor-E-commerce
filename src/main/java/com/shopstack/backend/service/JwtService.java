@@ -4,6 +4,7 @@ import com.shopstack.backend.entity.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -11,8 +12,8 @@ import java.util.Date;
 @Service
 public class JwtService {
 
-    private final String SECRET_KEY =
-            "ThisIsMyVerySecretKeyForShopStackProject123456";
+    @Value("${jwt.secret}")
+    private String secretKey;
 
     public String generateToken(User user) {
 
@@ -28,7 +29,7 @@ public class JwtService {
                 )
                 .signWith(
                         SignatureAlgorithm.HS256,
-                        SECRET_KEY.getBytes()
+                        secretKey.getBytes()
                 )
                 .compact();
     }
@@ -36,7 +37,7 @@ public class JwtService {
     public String extractEmail(String token) {
 
         Claims claims = Jwts.parser()
-                .setSigningKey(SECRET_KEY.getBytes())
+                .setSigningKey(secretKey.getBytes())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
@@ -47,7 +48,7 @@ public class JwtService {
     public String extractRole(String token) {
 
         Claims claims = Jwts.parser()
-                .setSigningKey(SECRET_KEY.getBytes())
+                .setSigningKey(secretKey.getBytes())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();

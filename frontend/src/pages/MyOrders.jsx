@@ -3,7 +3,7 @@ import axios from "axios";
 import Navbar from "../components/Navbar";
 import { getErrorMessage } from "../utils/errorHandler";
 
-const API = "http://localhost:8080";
+const API = import.meta.env.VITE_API_BASE_URL;
 
 function MyOrders() {
     const [orders, setOrders] = useState([]);

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
-const API = "http://localhost:8080";
+const API = import.meta.env.VITE_API_BASE_URL;
 
 const Checkout = () => {
 
@@ -756,8 +756,7 @@ const Checkout = () => {
 
                 const options = {
 
-                    key:
-                    orderResponse.data.key,
+                    key: import.meta.env.VITE_RAZORPAY_KEY_ID,
 
                     amount:
                     orderResponse.data.amount,
@@ -846,7 +845,7 @@ const Checkout = () => {
 
 
                                 window.location.href =
-                                    "/orders";
+                                    "/order-success";
 
 
                             } catch (error) {
@@ -992,7 +991,7 @@ const Checkout = () => {
 
 
                 window.location.href =
-                    "/orders";
+                    "/order-success";
 
             }
 

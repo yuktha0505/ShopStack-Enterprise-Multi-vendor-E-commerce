@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { getErrorMessage } from "../utils/errorHandler";
 
-const API = "http://localhost:8080";
+const API = import.meta.env.VITE_API_BASE_URL;
 
 function AdminReturns() {
     const [returns, setReturns] = useState([]);
