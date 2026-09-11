@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { API_BASE_URL } from "../config/api";
 
 function AdminCoupons() {
 
@@ -47,12 +48,12 @@ function AdminCoupons() {
                 await Promise.all([
 
                     axios.get(
-                        "http://localhost:8080/api/coupons",
+                        `${API_BASE_URL}/api/coupons`,
                         { headers }
                     ),
 
                     axios.get(
-                        "http://localhost:8080/api/products",
+                        `${API_BASE_URL}/api/products`,
                         { headers }
                     )
 
@@ -103,7 +104,7 @@ function AdminCoupons() {
             const token = localStorage.getItem("token");
 
             const response = await axios.get(
-                "http://localhost:8080/api/admin/coupons/analytics",
+                `${API_BASE_URL}/api/admin/coupons/analytics`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -374,7 +375,7 @@ function AdminCoupons() {
 
             await axios.post(
 
-                "http://localhost:8080/api/coupons",
+                `${API_BASE_URL}/api/coupons`,
 
                 request,
 
@@ -477,7 +478,7 @@ function AdminCoupons() {
             const token = localStorage.getItem("token");
 
             await axios.put(
-                `http://localhost:8080/api/coupons/${couponId}/toggle`,
+                `${API_BASE_URL}/api/coupons/${couponId}/toggle`,
                 {},
                 {
                     headers: {

@@ -3,6 +3,7 @@ import axios from "axios";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { getErrorMessage } from "../utils/errorHandler";
+import { API_BASE_URL } from "../config/api";
 
 function MyProducts() {
     const [products, setProducts] = useState([]);
@@ -20,7 +21,7 @@ function MyProducts() {
             const token = localStorage.getItem("token");
 
             const response = await axios.get(
-                "http://localhost:8080/api/products/my",
+                `${API_BASE_URL}/api/products/my`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -58,7 +59,7 @@ function MyProducts() {
             const token = localStorage.getItem("token");
 
             await axios.delete(
-                `http://localhost:8080/api/products/${id}`,
+                `${API_BASE_URL}/api/products/${id}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`

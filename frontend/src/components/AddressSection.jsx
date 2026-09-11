@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { API_BASE_URL } from "../config/api";
 
 
 function AddressSection({ selectedAddress, setSelectedAddress }) {
@@ -26,7 +27,7 @@ function AddressSection({ selectedAddress, setSelectedAddress }) {
             const token = localStorage.getItem("token");
 
             const response = await axios.get(
-                "http://localhost:8080/api/addresses",
+                `${API_BASE_URL}/api/addresses`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -106,7 +107,7 @@ function AddressSection({ selectedAddress, setSelectedAddress }) {
             if (editingAddress) {
 
                 response = await axios.put(
-                    `http://localhost:8080/api/addresses/${editingAddress.id}`,
+                    `${API_BASE_URL}/api/addresses/${editingAddress.id}`,
                     form,
                     {
                         headers: {
@@ -118,7 +119,7 @@ function AddressSection({ selectedAddress, setSelectedAddress }) {
             } else {
 
                 response = await axios.post(
-                    "http://localhost:8080/api/addresses",
+                    `${API_BASE_URL}/api/addresses`,
                     form,
                     {
                         headers: {
@@ -176,7 +177,7 @@ function AddressSection({ selectedAddress, setSelectedAddress }) {
             const token = localStorage.getItem("token");
 
             await axios.delete(
-                `http://localhost:8080/api/addresses/${id}`,
+                `${API_BASE_URL}/api/addresses/${id}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`

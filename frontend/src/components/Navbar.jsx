@@ -1,6 +1,7 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { API_BASE_URL } from "../config/api";
 
 function Navbar() {
     const navigate = useNavigate();
@@ -28,7 +29,7 @@ function Navbar() {
             }
 
             const response = await axios.get(
-                "http://localhost:8080/api/notifications/unread-count",
+                `${API_BASE_URL}/api/notifications/unread-count`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,

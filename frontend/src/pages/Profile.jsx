@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Navbar from "../components/Navbar";
+import { API_BASE_URL } from "../config/api";
 
 function Profile() {
 
@@ -16,7 +17,7 @@ function Profile() {
                 const token = localStorage.getItem("token");
 
                 const response = await axios.get(
-                    "http://localhost:8080/api/user/profile",
+                    `${API_BASE_URL}/api/user/profile`,
                     {
                         headers: {
                             Authorization: `Bearer ${token}`,
@@ -45,7 +46,7 @@ function Profile() {
             const token = localStorage.getItem("token");
 
             await axios.put(
-                "http://localhost:8080/api/user/profile",
+                `${API_BASE_URL}/api/user/profile`,
                 profile,
                 {
                     headers: {

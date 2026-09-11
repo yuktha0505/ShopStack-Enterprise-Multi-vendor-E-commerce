@@ -10,7 +10,6 @@ import com.shopstack.backend.entity.Product;
 import com.shopstack.backend.dto.ProductResponse;
 @RestController
 @RequestMapping("/api/products")
-@CrossOrigin(origins = "http://localhost:5173")
 public class ProductController {
 
     @Autowired

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Navbar from "../components/Navbar";
+import { API_BASE_URL } from "../config/api";
 
 function Inventory() {
 
@@ -17,7 +18,7 @@ function Inventory() {
     const fetchInventory = async () => {
         try {
             const response = await axios.get(
-                "http://localhost:8080/api/inventory",
+                `${API_BASE_URL}/api/inventory`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -37,7 +38,7 @@ function Inventory() {
         try {
 
             const response = await axios.get(
-                "http://localhost:8080/api/inventory/summary",
+                `${API_BASE_URL}/api/inventory/summary`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -61,7 +62,7 @@ function Inventory() {
         try {
 
             await axios.put(
-                `http://localhost:8080/api/inventory/${id}`,
+                `${API_BASE_URL}/api/inventory/${id}`,
                 {
                     quantity: Number(quantity)
                 },
@@ -91,7 +92,7 @@ function Inventory() {
         try {
 
             await axios.put(
-                `http://localhost:8080/api/inventory/${id}/add`,
+                `${API_BASE_URL}/api/inventory/${id}/add`,
                 {
                     quantity: Number(quantity)
                 },

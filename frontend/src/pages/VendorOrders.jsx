@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import Navbar from "../components/Navbar";
 import { getErrorMessage } from "../utils/errorHandler";
+import { API_BASE_URL } from "../config/api";
 
 function VendorOrders() {
     const [orders, setOrders] = useState([]);
@@ -64,7 +65,7 @@ function VendorOrders() {
             }
 
             const response = await axios.get(
-                "http://localhost:8080/api/orders/vendor",
+                `${API_BASE_URL}/api/orders/vendor`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -105,7 +106,7 @@ function VendorOrders() {
             }
 
             await axios.put(
-                `http://localhost:8080/api/orders/${orderId}/status`,
+                `${API_BASE_URL}/api/orders/${orderId}/status`,
                 null,
                 {
                     params: {

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { API_BASE_URL } from "../config/api";
 
 function VendorCoupons() {
 
@@ -20,7 +21,7 @@ function VendorCoupons() {
                 localStorage.getItem("token");
 
             const response = await axios.get(
-                "http://localhost:8080/api/coupons/vendor",
+                `${API_BASE_URL}/api/coupons/vendor`,
                 {
                     headers: {
                         Authorization:
@@ -78,7 +79,7 @@ function VendorCoupons() {
 
             await axios.put(
 
-                `http://localhost:8080/api/coupons/${couponId}/approve`,
+                `${API_BASE_URL}/api/coupons/${couponId}/approve`,
 
                 {},
 
@@ -132,7 +133,7 @@ function VendorCoupons() {
 
             await axios.put(
 
-                `http://localhost:8080/api/coupons/${couponId}/reject`,
+                `${API_BASE_URL}/api/coupons/${couponId}/reject`,
 
                 {},
 

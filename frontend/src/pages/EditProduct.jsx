@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import Navbar from "../components/Navbar";
 import { getErrorMessage } from "../utils/errorHandler";
+import { API_BASE_URL } from "../config/api";
 
 const initialProduct = {
     name: "",
@@ -39,7 +40,7 @@ function EditProduct() {
                 }
 
                 const response = await axios.get(
-                    "http://localhost:8080/api/products/my",
+                    `${API_BASE_URL}/api/products/my`,
                     {
                         headers: {
                             Authorization: `Bearer ${token}`
@@ -188,7 +189,7 @@ function EditProduct() {
             };
 
             const response = await axios.put(
-                `http://localhost:8080/api/products/${id}`,
+                `${API_BASE_URL}/api/products/${id}`,
                 productData,
                 {
                     headers: {

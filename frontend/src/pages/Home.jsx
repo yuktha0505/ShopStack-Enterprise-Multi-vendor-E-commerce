@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import Navbar from "../components/Navbar";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../config/api";
 
 function Home() {
 
@@ -22,7 +23,7 @@ function Home() {
                 console.log("Token:", token);
 
                 const response = await axios.get(
-                    "http://localhost:8080/api/products",
+                    `${API_BASE_URL}/api/products`,
                     {
                         headers: {
                             Authorization: `Bearer ${token}`

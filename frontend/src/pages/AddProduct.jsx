@@ -2,6 +2,7 @@ import { useState } from "react";
 import axios from "axios";
 import Navbar from "../components/Navbar";
 import { getErrorMessage } from "../utils/errorHandler";
+import { API_BASE_URL } from "../config/api";
 
 const initialProduct = {
     name: "",
@@ -121,7 +122,7 @@ function AddProduct() {
             };
 
             const response = await axios.post(
-                "http://localhost:8080/api/products",
+                `${API_BASE_URL}/api/products`,
                 productData,
                 {
                     headers: {

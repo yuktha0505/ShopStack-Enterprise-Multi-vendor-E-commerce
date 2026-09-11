@@ -3,6 +3,7 @@ import axios from "axios";
 import Navbar from "../components/Navbar";
 import { useNavigate } from "react-router-dom";
 import { getErrorMessage } from "../utils/errorHandler";
+import { API_BASE_URL } from "../config/api";
 
 function Cart() {
     const navigate = useNavigate();
@@ -30,7 +31,7 @@ function Cart() {
             }
 
             const response = await axios.get(
-                "http://localhost:8080/api/cart",
+                `${API_BASE_URL}/api/cart`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -71,7 +72,7 @@ function Cart() {
             const token = localStorage.getItem("token");
 
             await axios.put(
-                `http://localhost:8080/api/cart/increase/${cartItemId}`,
+                `${API_BASE_URL}/api/cart/increase/${cartItemId}`,
                 {},
                 {
                     headers: {
@@ -101,7 +102,7 @@ function Cart() {
             const token = localStorage.getItem("token");
 
             await axios.put(
-                `http://localhost:8080/api/cart/decrease/${cartItemId}`,
+                `${API_BASE_URL}/api/cart/decrease/${cartItemId}`,
                 {},
                 {
                     headers: {
@@ -131,7 +132,7 @@ function Cart() {
             const token = localStorage.getItem("token");
 
             await axios.delete(
-                `http://localhost:8080/api/cart/remove/${cartItemId}`,
+                `${API_BASE_URL}/api/cart/remove/${cartItemId}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`

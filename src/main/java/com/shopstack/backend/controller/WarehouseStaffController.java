@@ -8,7 +8,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/warehouse-staff")
-@CrossOrigin(origins="http://localhost:5173")
 public class WarehouseStaffController {
     private final WarehouseService warehouseService;
     private final JwtService jwtService;

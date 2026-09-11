@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import { getErrorMessage } from "../utils/errorHandler";
+import { API_BASE_URL } from "../config/api";
 
 function AdminDashboard() {
     const [dashboard, setDashboard] = useState(null);
@@ -21,7 +22,7 @@ function AdminDashboard() {
             }
 
             const response = await axios.get(
-                "http://localhost:8080/api/admin/dashboard",
+                `${API_BASE_URL}/api/admin/dashboard`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { API_BASE_URL } from "../config/api";
 
 function VendorManagement() {
 
@@ -20,7 +21,7 @@ function VendorManagement() {
             const token = localStorage.getItem("token");
 
             const response = await axios.get(
-                "http://localhost:8080/api/admin/vendors",
+                `${API_BASE_URL}/api/admin/vendors`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`

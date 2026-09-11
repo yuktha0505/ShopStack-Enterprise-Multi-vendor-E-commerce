@@ -13,7 +13,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin/warehouses")
-@CrossOrigin(origins="http://localhost:5173")
 public class AdminWarehouseController {
     private final WarehouseService warehouseService;
     private final UserRepository userRepository;

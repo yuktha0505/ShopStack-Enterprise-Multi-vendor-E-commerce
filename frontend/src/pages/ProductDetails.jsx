@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import axios from "axios";
 import Navbar from "../components/Navbar";
 import { getErrorMessage } from "../utils/errorHandler";
+import { API_BASE_URL } from "../config/api";
 
 function ProductDetails() {
     const { id } = useParams();
@@ -22,7 +23,7 @@ function ProductDetails() {
                 const token = localStorage.getItem("token");
 
                 const response = await axios.get(
-                    `http://localhost:8080/api/products/${id}`,
+                    `${API_BASE_URL}/api/products/${id}`,
                     {
                         headers: {
                             Authorization: `Bearer ${token}`,
@@ -72,7 +73,7 @@ function ProductDetails() {
             setAddingToCart(true);
 
             const response = await axios.post(
-                "http://localhost:8080/api/cart/add",
+                `${API_BASE_URL}/api/cart/add`,
                 {
                     productId: product.id,
                     quantity: 1,

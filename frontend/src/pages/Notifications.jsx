@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Navbar from "../components/Navbar";
+import { API_BASE_URL } from "../config/api";
 
 function Notifications() {
 
@@ -20,7 +21,7 @@ function Notifications() {
                 localStorage.getItem("token");
 
             const response = await axios.get(
-                "http://localhost:8080/api/notifications",
+                `${API_BASE_URL}/api/notifications`,
                 {
                     headers: {
                         Authorization:
@@ -65,7 +66,7 @@ function Notifications() {
                 localStorage.getItem("token");
 
             await axios.put(
-                `http://localhost:8080/api/notifications/${id}/read`,
+                `${API_BASE_URL}/api/notifications/${id}/read`,
                 {},
                 {
                     headers: {

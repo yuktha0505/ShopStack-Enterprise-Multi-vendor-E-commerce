@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { API_BASE_URL } from "../config/api";
 
 function AdminAnalytics() {
 
@@ -16,7 +17,7 @@ function AdminAnalytics() {
                 const token = localStorage.getItem("token");
 
                 const response = await axios.get(
-                    "http://localhost:8080/api/admin/analytics",
+                    `${API_BASE_URL}/api/admin/analytics`,
                     {
                         headers: {
                             Authorization: `Bearer ${token}`

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { getErrorMessage } from "../utils/errorHandler";
+import { API_BASE_URL } from "../config/api";
 
 function AdminCommissions() {
     const [commissions, setCommissions] = useState([]);
@@ -26,7 +27,7 @@ function AdminCommissions() {
             }
 
             const response = await axios.get(
-                "http://localhost:8080/api/admin/commissions",
+                `${API_BASE_URL}/api/admin/commissions`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -73,7 +74,7 @@ function AdminCommissions() {
             }
 
             await axios.patch(
-                `http://localhost:8080/api/admin/commissions/${commissionId}/pay`,
+                `${API_BASE_URL}/api/admin/commissions/${commissionId}/pay`,
                 {},
                 {
                     headers: {
