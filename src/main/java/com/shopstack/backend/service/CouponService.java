@@ -917,172 +917,53 @@ public class CouponService {
 
     public List<CouponResponse> getAvailableCoupons(String email) {
 
-        // =====================================================
-        // 1. FIND CUSTOMER
-        // =====================================================
-
-        User user =
-                userRepository.findByEmail(email)
-                        .orElseThrow(() ->
-                                new RuntimeException(
-                                        "User not found"
-                                )
-                        );
-
-
-        // =====================================================
-        // 2. FIND CUSTOMER CART
-        // =====================================================
-
-        Cart cart =
-                cartRepository.findByUser(user)
-                        .orElseThrow(() ->
-                                new RuntimeException(
-                                        "Cart not found"
-                                )
-                        );
-
-
-        // =====================================================
-        // 3. CHECK CART
-        // =====================================================
-
-        if (cart.getItems() == null ||
-                cart.getItems().isEmpty()) {
-
-            return new ArrayList<>();
-        }
-
-
-        // =====================================================
-        // 4. GET APPROVED COUPONS
-        // =====================================================
-
         List<Coupon> coupons =
                 couponRepository.findByStatus(
                         CouponStatus.APPROVED
                 );
 
-
         LocalDateTime now =
                 LocalDateTime.now();
-
 
         List<CouponResponse> responses =
                 new ArrayList<>();
 
-
-        // =====================================================
-        // 5. CHECK EACH COUPON
-        // =====================================================
-
         for (Coupon coupon : coupons) {
 
-
-            // -------------------------------------------------
-            // ACTIVE CHECK
-            // -------------------------------------------------
-
-            if (!Boolean.TRUE.equals(
-                    coupon.getActive())) {
-
+            // Active check
+            if (!Boolean.TRUE.equals(coupon.getActive())) {
                 continue;
             }
 
-
-            // -------------------------------------------------
-            // START DATE CHECK
-            // -------------------------------------------------
-
+            // Start date check
             if (coupon.getStartDate() != null &&
-                    now.isBefore(
-                            coupon.getStartDate()
-                    )) {
-
+                    now.isBefore(coupon.getStartDate())) {
                 continue;
             }
 
-
-            // -------------------------------------------------
-            // EXPIRY CHECK
-            // -------------------------------------------------
-
+            // Expiry check
             if (coupon.getExpiryDate() != null &&
-                    now.isAfter(
-                            coupon.getExpiryDate()
-                    )) {
-
+                    now.isAfter(coupon.getExpiryDate())) {
                 continue;
             }
 
-
-            // -------------------------------------------------
-            // USAGE LIMIT CHECK
-            // -------------------------------------------------
-
+            // Usage limit check
             if (coupon.getUsageLimit() != null &&
                     coupon.getUsedCount() != null &&
-                    coupon.getUsedCount() >=
-                            coupon.getUsageLimit()) {
-
+                    coupon.getUsedCount() >= coupon.getUsageLimit()) {
                 continue;
             }
 
-
-            // =================================================
-            // 6. CHECK CART PRODUCT ELIGIBILITY
-            // =================================================
-
-            if (coupon.getEligibleProducts() == null ||
-                    coupon.getEligibleProducts().isEmpty()) {
-
-                continue;
-            }
-
-
-            boolean eligibleProductFound =
-                    cart.getItems()
-                            .stream()
-                            .anyMatch(cartItem ->
-
-                                    coupon.getEligibleProducts()
-                                            .stream()
-                                            .anyMatch(
-                                                    couponProduct ->
-
-                                                            couponProduct
-                                                                    .getId()
-                                                                    .equals(
-                                                                            cartItem
-                                                                                    .getProduct()
-                                                                                    .getId()
-                                                                    )
-                                            )
-                            );
-
-
-            // -------------------------------------------------
-            // NO ELIGIBLE PRODUCT
-            // -------------------------------------------------
-
-            if (!eligibleProductFound) {
-
-                continue;
-            }
-
-
-            // =================================================
-            // 7. COUPON IS AVAILABLE
-            // =================================================
-
+            // Coupon is available
             CouponResponse response =
                     convertToResponse(coupon);
 
+            // Don't expose eligible product IDs
+            // in the checkout coupon list
             response.setProductIds(null);
 
             responses.add(response);
         }
-
 
         return responses;
     }
