@@ -534,7 +534,7 @@ public class CouponService {
 
 
         LocalDateTime now =
-                LocalDateTime.now();
+                LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
 
 
         // -----------------------------------------------------
