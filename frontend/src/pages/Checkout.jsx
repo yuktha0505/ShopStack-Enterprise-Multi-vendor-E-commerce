@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-
+import AddressSection from "../components/AddressSection";
 const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
 
 const Checkout = () => {
@@ -1059,104 +1059,10 @@ const Checkout = () => {
                         {/* ADDRESS */}
                         {/* ================================================= */}
 
-                        <div className="bg-white rounded-lg shadow p-6">
-
-                            <h2 className="text-xl font-semibold mb-4">
-
-                                Delivery Address
-
-                            </h2>
-
-
-                            {addresses.length === 0 ? (
-
-                                <p className="text-gray-500">
-
-                                    No addresses available.
-
-                                </p>
-
-                            ) : (
-
-                                <div className="space-y-3">
-
-                                    {addresses.map(
-                                        (address) => (
-
-                                            <label
-                                                key={
-                                                    address.id
-                                                }
-                                                className="flex items-start gap-3 border rounded-lg p-4 cursor-pointer"
-                                            >
-
-                                                <input
-                                                    type="radio"
-                                                    name="address"
-                                                    checked={
-                                                        selectedAddress?.id ===
-                                                        address.id
-                                                    }
-                                                    onChange={() =>
-                                                        setSelectedAddress(
-                                                            address
-                                                        )
-                                                    }
-                                                />
-
-
-                                                <div>
-
-                                                    <p className="font-medium">
-
-                                                        {
-                                                            address.name
-                                                        }
-
-                                                    </p>
-
-
-                                                    <p className="text-gray-600">
-
-                                                        {
-                                                            address.addressLine1
-                                                        }
-
-                                                    </p>
-
-
-                                                    <p className="text-gray-600">
-
-                                                        {
-                                                            address.city
-                                                        }
-
-                                                        ,{" "}
-
-                                                        {
-                                                            address.state
-                                                        }
-
-                                                        {" "}
-
-                                                        {
-                                                            address.pincode
-                                                        }
-
-                                                    </p>
-
-                                                </div>
-
-                                            </label>
-
-                                        )
-                                    )}
-
-                                </div>
-
-                            )}
-
-                        </div>
+                        <AddressSection
+                            selectedAddress={selectedAddress}
+                            setSelectedAddress={setSelectedAddress}
+                        />
 
 
                         {/* ================================================= */}
