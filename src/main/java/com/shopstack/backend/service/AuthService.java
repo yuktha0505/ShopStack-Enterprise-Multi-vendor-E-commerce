@@ -33,7 +33,17 @@ public class AuthService {
         user.setName(request.getName());
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setRole(Role.valueOf(request.getRole().toUpperCase()));
+
+        String requestedRole = request.getRole();
+
+        if (requestedRole == null ||
+                (!requestedRole.equalsIgnoreCase("CUSTOMER") &&
+                        !requestedRole.equalsIgnoreCase("VENDOR"))) {
+
+            return "Invalid registration role";
+        }
+
+        user.setRole(Role.valueOf(requestedRole.toUpperCase()));
 
         userRepository.save(user);
 
