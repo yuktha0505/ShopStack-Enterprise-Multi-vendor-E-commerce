@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -247,7 +248,7 @@ public class OrderService {
                 );
             }
             LocalDateTime now =
-                    LocalDateTime.now();
+                    LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
 
 
             // -------------------------------------------------
@@ -417,7 +418,7 @@ public class OrderService {
 
 
         order.setOrderDate(
-                LocalDateTime.now()
+                LocalDateTime.now(ZoneId.of("Asia/Kolkata"))
         );
 
 
@@ -568,7 +569,7 @@ public class OrderService {
 
 
             couponUsage.setUsedAt(
-                    LocalDateTime.now()
+                    LocalDateTime.now(ZoneId.of("Asia/Kolkata"))
             );
 
 
@@ -890,7 +891,7 @@ public class OrderService {
         }
 
         if (newStatus == OrderStatus.DELIVERED) {
-            order.setDeliveredAt(LocalDateTime.now());
+            order.setDeliveredAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
         }
 
         orderRepository.save(order);
