@@ -924,6 +924,7 @@ public class CouponService {
 
         LocalDateTime now =
                 LocalDateTime.now();
+        System.out.println("COUPON DEBUG NOW = " + now);
 
         List<CouponResponse> responses =
                 new ArrayList<>();
