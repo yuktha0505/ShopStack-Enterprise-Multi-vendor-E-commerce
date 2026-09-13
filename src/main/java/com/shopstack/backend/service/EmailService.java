@@ -1,26 +1,23 @@
 package com.shopstack.backend.service;
 
-import jakarta.mail.internet.MimeMessage;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 
 @Service
 public class EmailService {
 
-    @Autowired
-    private JavaMailSender mailSender;
+    @Value("${resend.api.key}")
+    private String resendApiKey;
 
-    @Value("${spring.mail.username}")
+    @Value("${resend.from}")
     private String senderEmail;
 
-
-    // =========================================================
-    // SIMPLE TEXT EMAIL
-    // =========================================================
+    private final HttpClient httpClient = HttpClient.newHttpClient();
 
     public void sendSimpleEmail(
             String to,
@@ -28,21 +25,105 @@ public class EmailService {
             String body
     ) {
 
+        sendEmail(
+                to,
+                subject,
+                "<p>" + body.replace("\n", "<br>") + "</p>"
+        );
+    }
+
+    public void sendHtmlEmail(
+            String to,
+            String subject,
+            String htmlBody
+    ) {
+
+        sendEmail(
+                to,
+                subject,
+                htmlBody
+        );
+    }
+
+    private void sendEmail(
+            String to,
+            String subject,
+            String htmlBody
+    ) {
+
+        if (to == null || to.isBlank()) {
+            System.err.println(
+                    "EMAIL SENDING SKIPPED: recipient email unavailable"
+            );
+            return;
+        }
+
         try {
 
-            SimpleMailMessage message =
-                    new SimpleMailMessage();
-
-            message.setFrom(senderEmail);
-            message.setTo(to);
-            message.setSubject(subject);
-            message.setText(body);
-
-            mailSender.send(message);
-
-            System.out.println(
-                    "EMAIL SENT SUCCESSFULLY TO: " + to
+            String jsonBody = """
+                    {
+                      "from": "%s",
+                      "to": ["%s"],
+                      "subject": "%s",
+                      "html": %s
+                    }
+                    """.formatted(
+                    escapeJson(senderEmail),
+                    escapeJson(to),
+                    escapeJson(subject),
+                    toJsonString(htmlBody)
             );
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("https://api.resend.com/emails"))
+                    .header(
+                            "Authorization",
+                            "Bearer " + resendApiKey
+                    )
+                    .header(
+                            "Content-Type",
+                            "application/json"
+                    )
+                    .POST(
+                            HttpRequest.BodyPublishers.ofString(
+                                    jsonBody
+                            )
+                    )
+                    .build();
+
+            HttpResponse<String> response =
+                    httpClient.send(
+                            request,
+                            HttpResponse.BodyHandlers.ofString()
+                    );
+
+            if (response.statusCode() >= 200 &&
+                    response.statusCode() < 300) {
+
+                System.out.println(
+                        "EMAIL SENT SUCCESSFULLY TO: " + to
+                );
+
+                System.out.println(
+                        "RESEND RESPONSE: " + response.body()
+                );
+
+            } else {
+
+                System.err.println(
+                        "EMAIL SENDING FAILED TO: " + to
+                );
+
+                System.err.println(
+                        "Resend HTTP Status: " +
+                                response.statusCode()
+                );
+
+                System.err.println(
+                        "Resend Response: " +
+                                response.body()
+                );
+            }
 
         } catch (Exception e) {
 
@@ -56,54 +137,21 @@ public class EmailService {
         }
     }
 
+    private String escapeJson(String value) {
 
-    // =========================================================
-    // HTML EMAIL
-    // =========================================================
-
-    public void sendHtmlEmail(
-            String to,
-            String subject,
-            String htmlBody
-    ) {
-
-        try {
-
-            MimeMessage message =
-                    mailSender.createMimeMessage();
-
-            MimeMessageHelper helper =
-                    new MimeMessageHelper(
-                            message,
-                            true,
-                            "UTF-8"
-                    );
-
-            helper.setFrom(senderEmail);
-            helper.setTo(to);
-            helper.setSubject(subject);
-            helper.setText(
-                    htmlBody,
-                    true
-            );
-
-            mailSender.send(message);
-
-            System.out.println(
-                    "HTML EMAIL SENT SUCCESSFULLY TO: "
-                            + to
-            );
-
-        } catch (Exception e) {
-
-            System.err.println(
-                    "HTML EMAIL SENDING FAILED TO: "
-                            + to
-            );
-
-            System.err.println(
-                    "Reason: " + e.getMessage()
-            );
+        if (value == null) {
+            return "";
         }
+
+        return value
+                .replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r");
+    }
+
+    private String toJsonString(String value) {
+
+        return "\"" + escapeJson(value) + "\"";
     }
 }
