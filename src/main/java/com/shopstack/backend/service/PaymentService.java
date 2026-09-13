@@ -4,6 +4,7 @@ import com.razorpay.Order;
 import com.razorpay.RazorpayClient;
 import com.razorpay.Refund;
 import com.razorpay.Utils;
+import com.shopstack.backend.dto.PaymentFailureRequest;
 import com.shopstack.backend.dto.PaymentVerificationRequest;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +20,8 @@ public class PaymentService {
     @Value("${razorpay.key.secret}")
     private String razorpayKeySecret;
 
+    @Autowired
+    private NotificationService notificationService;
 
     // ==========================================
     // CREATE RAZORPAY ORDER
@@ -157,6 +160,38 @@ public class PaymentService {
                     e
             );
         }
+    }
+
+    // ==========================================
+// HANDLE PAYMENT FAILURE
+// ==========================================
+
+    public void handlePaymentFailure(
+            String customerEmail,
+            PaymentFailureRequest request
+    ) {
+
+        if (customerEmail == null ||
+                customerEmail.isBlank()) {
+
+            throw new RuntimeException(
+                    "Customer email is required"
+            );
+        }
+
+        if (request == null) {
+            throw new RuntimeException(
+                    "Payment failure details are required"
+            );
+        }
+
+        notificationService.notifyCustomerPaymentFailed(
+                customerEmail,
+                request.getRazorpayOrderId(),
+                request.getAmount(),
+                request.getErrorDescription(),
+                request.getErrorReason()
+        );
     }
 
 }

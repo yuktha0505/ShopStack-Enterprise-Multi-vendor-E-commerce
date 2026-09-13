@@ -21,6 +21,10 @@ import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+
+
+
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,19 +38,22 @@ public class ReturnRequestService {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
     private final PaymentService paymentService;
+    private final NotificationService notificationService;
 
     public ReturnRequestService(
             ReturnRequestRepository returnRequestRepository,
             OrderRepository orderRepository,
             ProductRepository productRepository,
             UserRepository userRepository,
-            PaymentService paymentService
+            PaymentService paymentService,
+            NotificationService notificationService
     ) {
         this.returnRequestRepository = returnRequestRepository;
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
         this.userRepository = userRepository;
         this.paymentService = paymentService;
+        this.notificationService = notificationService;
     }
 
     // =========================================================
@@ -313,10 +320,26 @@ public class ReturnRequestService {
             String gatewayStatus = String.valueOf(refund.get("status"));
 
             if ("processed".equalsIgnoreCase(gatewayStatus)) {
-                request.setStatus(ReturnStatus.REFUNDED);
-                request.setRefundedAt(LocalDateTime.now());
-                order.setPaymentStatus("REFUNDED");
-                order.setStatus(OrderStatus.REFUNDED);
+
+                request.setStatus(
+                        ReturnStatus.REFUNDED
+                );
+
+                request.setRefundedAt(
+                        LocalDateTime.now()
+                );
+
+                order.setPaymentStatus(
+                        "REFUNDED"
+                );
+
+                order.setStatus(
+                        OrderStatus.REFUNDED
+                );
+
+                notificationService.notifyCustomerRefundCompleted(
+                        request
+                );
             }
         } else {
             // COD has no Razorpay payment to refund. This admin action
@@ -326,6 +349,8 @@ public class ReturnRequestService {
             request.setRefundedAt(LocalDateTime.now());
             order.setPaymentStatus("REFUNDED");
             order.setStatus(OrderStatus.REFUNDED);
+
+            notificationService.notifyCustomerRefundCompleted(request);
         }
 
         orderRepository.save(order);
@@ -356,11 +381,30 @@ public class ReturnRequestService {
 
         String status = String.valueOf(refund.get("status"));
         if ("processed".equalsIgnoreCase(status)) {
-            request.setStatus(ReturnStatus.REFUNDED);
-            request.setRefundedAt(LocalDateTime.now());
-            order.setPaymentStatus("REFUNDED");
-            order.setStatus(OrderStatus.REFUNDED);
-            orderRepository.save(order);
+
+            request.setStatus(
+                    ReturnStatus.REFUNDED
+            );
+
+            request.setRefundedAt(
+                    LocalDateTime.now()
+            );
+
+            order.setPaymentStatus(
+                    "REFUNDED"
+            );
+
+            order.setStatus(
+                    OrderStatus.REFUNDED
+            );
+
+            orderRepository.save(
+                    order
+            );
+
+            notificationService.notifyCustomerRefundCompleted(
+                    request
+            );
         }
 
         return toResponse(returnRequestRepository.save(request));

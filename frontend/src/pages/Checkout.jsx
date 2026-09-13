@@ -923,6 +923,62 @@ const Checkout = () => {
                     );
 
 
+// =================================================
+// RAZORPAY PAYMENT FAILED
+// =================================================
+
+                razorpay.on(
+                    "payment.failed",
+                    async function (response) {
+
+                        console.error(
+                            "Razorpay payment failed:",
+                            response.error
+                        );
+
+                        try {
+
+                            await axios.post(
+                                `${API}/api/payment/failed`,
+                                {
+                                    razorpayOrderId:
+                                    razorpayOrderId,
+
+                                    amount:
+                                    payableAmount,
+
+                                    errorDescription:
+                                        response.error?.description ||
+                                        "Payment failed",
+
+                                    errorReason:
+                                        response.error?.reason ||
+                                        "UNKNOWN"
+                                },
+                                {
+                                    headers: {
+                                        Authorization:
+                                            `Bearer ${token}`,
+
+                                        "Content-Type":
+                                            "application/json"
+                                    }
+                                }
+                            );
+
+                        } catch (error) {
+
+                            console.error(
+                                "Failed to process payment failure notification:",
+                                error.response?.data ||
+                                error
+                            );
+                        }
+
+                    }
+                );
+
+
                 razorpay.open();
 
 

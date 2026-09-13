@@ -12,7 +12,6 @@ import com.shopstack.backend.entity.OrderItem;
 import com.shopstack.backend.entity.OrderStatus;
 import com.shopstack.backend.entity.Product;
 import com.shopstack.backend.entity.User;
-import com.shopstack.backend.enums.CouponStatus;
 import com.shopstack.backend.enums.DiscountType;
 import com.shopstack.backend.repository.CartRepository;
 import com.shopstack.backend.repository.CouponRepository;
@@ -22,7 +21,7 @@ import com.shopstack.backend.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import jakarta.transaction.Transactional;
+
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -54,6 +53,7 @@ public class OrderService {
 
     @Autowired
     private CommissionService commissionService;
+
 
     // =========================================================
     // PLACE ORDER
@@ -131,7 +131,6 @@ public class OrderService {
 
         double subtotal = 0;
 
-
         for (CartItem cartItem :
                 cart.getItems()) {
 
@@ -141,12 +140,10 @@ public class OrderService {
             int quantity =
                     cartItem.getQuantity();
 
-
             double price =
                     product.getFinalPrice() != null
                             ? product.getFinalPrice()
                             : product.getPrice();
-
 
             subtotal +=
                     price * quantity;
@@ -182,7 +179,6 @@ public class OrderService {
         if (couponCode != null &&
                 !couponCode.trim().isEmpty()) {
 
-
             String code =
                     couponCode
                             .trim()
@@ -203,11 +199,9 @@ public class OrderService {
                             );
 
 
-            // CHECK APPROVAL STATUS
-
-            // =====================================================
-// CHECK PRODUCT ELIGIBILITY
-// =====================================================
+            // =================================================
+            // CHECK PRODUCT ELIGIBILITY
+            // =================================================
 
             if (appliedCoupon.getEligibleProducts() == null ||
                     appliedCoupon.getEligibleProducts().isEmpty()) {
@@ -217,7 +211,9 @@ public class OrderService {
                 );
             }
 
-            final Coupon couponForEligibility = appliedCoupon;
+
+            final Coupon couponForEligibility =
+                    appliedCoupon;
 
 
             boolean eligibleProductFound =
@@ -247,13 +243,21 @@ public class OrderService {
                         "This coupon is not applicable to the products in your cart"
                 );
             }
+
+
+            // =================================================
+            // CURRENT TIME
+            // =================================================
+
             LocalDateTime now =
-                    LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
+                    LocalDateTime.now(
+                            ZoneId.of("Asia/Kolkata")
+                    );
 
 
-            // -------------------------------------------------
+            // =================================================
             // CHECK ACTIVE
-            // -------------------------------------------------
+            // =================================================
 
             if (!Boolean.TRUE.equals(
                     appliedCoupon.getActive())) {
@@ -264,9 +268,9 @@ public class OrderService {
             }
 
 
-            // -------------------------------------------------
+            // =================================================
             // CHECK START DATE
-            // -------------------------------------------------
+            // =================================================
 
             if (appliedCoupon.getStartDate() != null &&
                     now.isBefore(
@@ -279,9 +283,9 @@ public class OrderService {
             }
 
 
-            // -------------------------------------------------
+            // =================================================
             // CHECK EXPIRY
-            // -------------------------------------------------
+            // =================================================
 
             if (appliedCoupon.getExpiryDate() != null &&
                     now.isAfter(
@@ -294,11 +298,12 @@ public class OrderService {
             }
 
 
-            // -------------------------------------------------
+            // =================================================
             // CHECK USAGE LIMIT
-            // -------------------------------------------------
+            // =================================================
 
             if (appliedCoupon.getUsageLimit() != null &&
+                    appliedCoupon.getUsedCount() != null &&
                     appliedCoupon.getUsedCount() >=
                             appliedCoupon.getUsageLimit()) {
 
@@ -308,9 +313,9 @@ public class OrderService {
             }
 
 
-            // -------------------------------------------------
+            // =================================================
             // CHECK MINIMUM ORDER
-            // -------------------------------------------------
+            // =================================================
 
             if (appliedCoupon
                     .getMinimumOrderAmount() != null &&
@@ -326,9 +331,9 @@ public class OrderService {
             }
 
 
-            // -------------------------------------------------
+            // =================================================
             // CALCULATE DISCOUNT
-            // -------------------------------------------------
+            // =================================================
 
             if (appliedCoupon.getDiscountType()
                     == DiscountType.PERCENTAGE) {
@@ -341,17 +346,15 @@ public class OrderService {
 
             } else {
 
-                // FIXED DISCOUNT
-
                 discountAmount =
                         appliedCoupon
                                 .getDiscountValue();
             }
 
 
-            // -------------------------------------------------
+            // =================================================
             // MAXIMUM DISCOUNT
-            // -------------------------------------------------
+            // =================================================
 
             if (appliedCoupon
                     .getMaximumDiscount() != null &&
@@ -365,9 +368,9 @@ public class OrderService {
             }
 
 
-            // -------------------------------------------------
+            // =================================================
             // DISCOUNT CANNOT EXCEED SUBTOTAL
-            // -------------------------------------------------
+            // =================================================
 
             if (discountAmount > subtotal) {
 
@@ -376,9 +379,9 @@ public class OrderService {
             }
 
 
-            // -------------------------------------------------
+            // =================================================
             // ROUND DISCOUNT
-            // -------------------------------------------------
+            // =================================================
 
             discountAmount =
                     Math.round(
@@ -418,16 +421,43 @@ public class OrderService {
 
 
         order.setOrderDate(
-                LocalDateTime.now(ZoneId.of("Asia/Kolkata"))
+                LocalDateTime.now(
+                        ZoneId.of("Asia/Kolkata")
+                )
         );
 
 
-        /*
-         * Store final payable amount.
-         */
+        // -----------------------------------------------------
+        // STORE FINAL PAYABLE AMOUNT
+        // -----------------------------------------------------
+
         order.setTotalAmount(
                 finalAmount
         );
+
+
+        // -----------------------------------------------------
+        // STORE PAYMENT DETAILS
+        // -----------------------------------------------------
+
+        if (request != null) {
+
+            order.setPaymentMethod(
+                    request.getPaymentMethod()
+            );
+
+            order.setPaymentStatus(
+                    request.getPaymentStatus()
+            );
+
+            order.setRazorpayPaymentId(
+                    request.getRazorpayPaymentId()
+            );
+
+            order.setRazorpayOrderId(
+                    request.getRazorpayOrderId()
+            );
+        }
 
 
         // =====================================================
@@ -441,10 +471,8 @@ public class OrderService {
         for (CartItem cartItem :
                 cart.getItems()) {
 
-
             Product product =
                     cartItem.getProduct();
-
 
             int quantity =
                     cartItem.getQuantity();
@@ -475,9 +503,10 @@ public class OrderService {
             );
 
 
-            /*
-             * Store purchase-time price.
-             */
+            // -------------------------------------------------
+            // STORE PURCHASE-TIME PRICE
+            // -------------------------------------------------
+
             orderItem.setPrice(
                     price
             );
@@ -513,11 +542,21 @@ public class OrderService {
 
 
         // =====================================================
+        // DEBUG PAYMENT STATUS
+        // =====================================================
+
+        System.out.println(
+                "PAYMENT STATUS = [" +
+                        savedOrder.getPaymentStatus() +
+                        "]"
+        );
+
+
+        // =====================================================
         // 13. SAVE COUPON USAGE
         // =====================================================
 
         if (appliedCoupon != null) {
-
 
             // -------------------------------------------------
             // INCREASE USAGE COUNT
@@ -526,9 +565,11 @@ public class OrderService {
             Integer currentUsedCount =
                     appliedCoupon.getUsedCount();
 
+
             if (currentUsedCount == null) {
                 currentUsedCount = 0;
             }
+
 
             appliedCoupon.setUsedCount(
                     currentUsedCount + 1
@@ -569,7 +610,9 @@ public class OrderService {
 
 
             couponUsage.setUsedAt(
-                    LocalDateTime.now(ZoneId.of("Asia/Kolkata"))
+                    LocalDateTime.now(
+                            ZoneId.of("Asia/Kolkata")
+                    )
             );
 
 
@@ -580,7 +623,35 @@ public class OrderService {
 
 
         // =====================================================
-        // 14. NOTIFY VENDORS
+        // 14. CUSTOMER ORDER PLACED EMAIL
+        // =====================================================
+
+        notificationService.notifyCustomerOrderPlaced(
+                savedOrder
+        );
+
+
+        // =====================================================
+        // 15. CUSTOMER PAYMENT SUCCESS EMAIL
+        // =====================================================
+
+        if ("PAID".equalsIgnoreCase(
+                savedOrder.getPaymentStatus()
+        )) {
+
+            System.out.println(
+                    "TRIGGERING PAYMENT SUCCESS EMAIL"
+            );
+
+
+            notificationService.notifyCustomerPaymentSuccess(
+                    savedOrder
+            );
+        }
+
+
+        // =====================================================
+        // 16. NOTIFY VENDORS
         // =====================================================
 
         notificationService.notifyVendors(
@@ -589,10 +660,11 @@ public class OrderService {
 
 
         // =====================================================
-        // 15. CLEAR CART
+        // 17. CLEAR CART
         // =====================================================
 
         cart.getItems().clear();
+
 
         cartRepository.save(
                 cart
@@ -600,7 +672,7 @@ public class OrderService {
 
 
         // =====================================================
-        // 16. RETURN RESPONSE
+        // 18. RETURN RESPONSE
         // =====================================================
 
         return convertToResponse(
@@ -663,7 +735,6 @@ public class OrderService {
 
         for (OrderItem item :
                 order.getItems()) {
-
 
             OrderItemResponse itemResponse =
                     new OrderItemResponse();
@@ -764,6 +835,7 @@ public class OrderService {
     // =========================================================
     // UPDATE ORDER STATUS
     // =========================================================
+
     @Transactional
     public String updateOrderStatus(
             Long orderId,
@@ -871,31 +943,95 @@ public class OrderService {
 
 
         // -----------------------------------------------------
-        // UPDATE
+        // CANCEL
         // -----------------------------------------------------
 
-        if (newStatus == OrderStatus.CANCELLED) {
-            warehouseService.releaseAllocation(order.getId());
+        if (newStatus ==
+                OrderStatus.CANCELLED) {
+
+            warehouseService.releaseAllocation(
+                    order.getId()
+            );
         }
 
-        order.setStatus(newStatus);
 
-        if (newStatus == OrderStatus.CONFIRMED) {
-            // Allocation is part of confirmation: if no active warehouse can
-            // satisfy the complete order, the transaction fails and the order
-            // remains in PLACED state.
-            orderRepository.save(order);
-            warehouseService.allocateOrder(order.getId());
-            commissionService.calculateCommission(order.getId());
+        // -----------------------------------------------------
+        // UPDATE STATUS
+        // -----------------------------------------------------
 
+        order.setStatus(
+                newStatus
+        );
+
+
+        // -----------------------------------------------------
+        // CONFIRMED
+        // -----------------------------------------------------
+
+        if (newStatus ==
+                OrderStatus.CONFIRMED) {
+
+            /*
+             * Allocation is part of confirmation.
+             * If no active warehouse can satisfy
+             * the complete order, the transaction fails
+             * and the order remains in PLACED state.
+             */
+
+            orderRepository.save(
+                    order
+            );
+
+
+            warehouseService.allocateOrder(
+                    order.getId()
+            );
+
+
+            commissionService.calculateCommission(
+                    order.getId()
+            );
         }
 
-        if (newStatus == OrderStatus.DELIVERED) {
-            order.setDeliveredAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
+
+        // -----------------------------------------------------
+        // DELIVERED
+        // -----------------------------------------------------
+
+        if (newStatus ==
+                OrderStatus.DELIVERED) {
+
+            order.setDeliveredAt(
+                    LocalDateTime.now(
+                            ZoneId.of("Asia/Kolkata")
+                    )
+            );
         }
 
-        orderRepository.save(order);
+        Order savedOrder =
+                orderRepository.save(
+                        order
+                );
 
+// =====================================================
+// CUSTOMER - ORDER SHIPPED EMAIL
+// =====================================================
+
+        if (newStatus ==
+                OrderStatus.SHIPPED) {
+
+            notificationService.notifyCustomerOrderShipped(
+                    savedOrder
+            );
+        }
+
+        if (newStatus ==
+                OrderStatus.DELIVERED) {
+
+            notificationService.notifyCustomerOrderDelivered(
+                    savedOrder
+            );
+        }
 
         return "Order status updated to "
                 + newStatus;
@@ -967,7 +1103,6 @@ public class OrderService {
         for (Order order :
                 allOrders) {
 
-
             boolean vendorOwnsOrder =
                     order.getItems()
                             .stream()
@@ -1002,4 +1137,6 @@ public class OrderService {
 
         return responses;
     }
+
+
 }
