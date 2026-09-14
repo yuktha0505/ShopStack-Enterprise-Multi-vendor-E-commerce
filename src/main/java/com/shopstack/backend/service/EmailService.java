@@ -11,10 +11,10 @@ import java.net.http.HttpResponse;
 @Service
 public class EmailService {
 
-    @Value("${resend.api.key}")
-    private String resendApiKey;
+    @Value("${brevo.api.key}")
+    private String brevoApiKey;
 
-    @Value("${resend.from}")
+    @Value("${brevo.from}")
     private String senderEmail;
 
     private final HttpClient httpClient = HttpClient.newHttpClient();
@@ -24,12 +24,12 @@ public class EmailService {
             String subject,
             String body
     ) {
+        String htmlBody =
+                "<html><body>" +
+                        body.replace("\n", "<br>") +
+                        "</body></html>";
 
-        sendEmail(
-                to,
-                subject,
-                "<p>" + body.replace("\n", "<br>") + "</p>"
-        );
+        sendEmail(to, subject, htmlBody);
     }
 
     public void sendHtmlEmail(
@@ -37,12 +37,7 @@ public class EmailService {
             String subject,
             String htmlBody
     ) {
-
-        sendEmail(
-                to,
-                subject,
-                htmlBody
-        );
+        sendEmail(to, subject, htmlBody);
     }
 
     private void sendEmail(
@@ -62,10 +57,17 @@ public class EmailService {
 
             String jsonBody = """
                     {
-                      "from": "%s",
-                      "to": ["%s"],
+                      "sender": {
+                        "name": "ShopStack",
+                        "email": "%s"
+                      },
+                      "to": [
+                        {
+                          "email": "%s"
+                        }
+                      ],
                       "subject": "%s",
-                      "html": %s
+                      "htmlContent": %s
                     }
                     """.formatted(
                     escapeJson(senderEmail),
@@ -75,10 +77,14 @@ public class EmailService {
             );
 
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("https://api.resend.com/emails"))
+                    .uri(
+                            URI.create(
+                                    "https://api.brevo.com/v3/smtp/email"
+                            )
+                    )
                     .header(
-                            "Authorization",
-                            "Bearer " + resendApiKey
+                            "api-key",
+                            brevoApiKey
                     )
                     .header(
                             "Content-Type",
@@ -105,7 +111,7 @@ public class EmailService {
                 );
 
                 System.out.println(
-                        "RESEND RESPONSE: " + response.body()
+                        "BREVO RESPONSE: " + response.body()
                 );
 
             } else {
@@ -115,12 +121,12 @@ public class EmailService {
                 );
 
                 System.err.println(
-                        "Resend HTTP Status: " +
+                        "Brevo HTTP Status: " +
                                 response.statusCode()
                 );
 
                 System.err.println(
-                        "Resend Response: " +
+                        "Brevo Response: " +
                                 response.body()
                 );
             }
@@ -151,7 +157,6 @@ public class EmailService {
     }
 
     private String toJsonString(String value) {
-
         return "\"" + escapeJson(value) + "\"";
     }
 }
